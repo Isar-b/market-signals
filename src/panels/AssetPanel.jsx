@@ -1,19 +1,25 @@
-import { ASSETS } from '../config/assets'
+import { useMemo } from 'react'
 import AssetButton from '../components/AssetButton'
+import AssetSearch from '../components/AssetSearch'
 
-export default function AssetPanel({ selectedAsset, onSelect }) {
+export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove }) {
+  const existingIds = useMemo(() => new Set(assets.map(a => a.yahooSymbol)), [assets])
+
   return (
     <>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">
+      <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-3">
         Assets
       </h2>
-      <div className="flex flex-col gap-1">
-        {ASSETS.map(asset => (
+      <AssetSearch onAdd={onAdd} existingIds={existingIds} />
+      <div className="flex flex-col gap-1 overflow-y-auto flex-1 min-h-0">
+        {assets.map(asset => (
           <AssetButton
             key={asset.id}
             label={asset.label}
             isSelected={selectedAsset === asset.id}
             onClick={() => onSelect(asset.id)}
+            onRemove={() => onRemove(asset.id)}
+            canRemove={assets.length > 1}
           />
         ))}
       </div>

@@ -1,41 +1,27 @@
-import { useState, useEffect } from 'react'
 import { useAppState } from './state/useAppState'
-import { ASSETS } from './config/assets'
-import { resolveTokenIds } from './config/resolveTokenIds'
 import AssetPanel from './panels/AssetPanel'
 import PerformancePanel from './panels/PerformancePanel'
 import ProbabilityPanel from './panels/ProbabilityPanel'
 
 export default function App() {
-  const { selectedAsset, setSelectedAsset, selectedHorizon, setSelectedHorizon } = useAppState()
-  const [tokensReady, setTokensReady] = useState(false)
+  const {
+    assets, addAsset, removeAsset,
+    selectedAsset, setSelectedAsset,
+    selectedHorizon, setSelectedHorizon,
+  } = useAppState()
 
-  useEffect(() => {
-    resolveTokenIds()
-      .then(() => setTokensReady(true))
-      .catch(err => {
-        console.error('Token resolution failed:', err)
-        setTokensReady(true) // proceed anyway; cards will show unavailable
-      })
-  }, [])
-
-  const asset = ASSETS.find(a => a.id === selectedAsset)
-
-  if (!tokensReady) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-bg-primary">
-        <div className="text-text-secondary animate-pulse">Resolving market data...</div>
-      </div>
-    )
-  }
+  const asset = assets.find(a => a.id === selectedAsset)
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* Panel 1: Asset selector - 15% */}
-      <div className="w-[15%] min-w-[140px] bg-bg-panel border-r border-border p-3 flex flex-col">
+      <div className="w-[15%] min-w-[140px] bg-bg-panel border-r border-border p-3 flex flex-col overflow-visible">
         <AssetPanel
+          assets={assets}
           selectedAsset={selectedAsset}
           onSelect={setSelectedAsset}
+          onAdd={addAsset}
+          onRemove={removeAsset}
         />
       </div>
 

@@ -1,4 +1,4 @@
-export const ASSETS = [
+export const DEFAULT_ASSETS = [
   { id: 'SP500', label: 'S&P 500',     yahooSymbol: '^GSPC' },
   { id: 'NDX',   label: 'Nasdaq 100',  yahooSymbol: '^NDX'  },
   { id: 'OIL',   label: 'Brent crude', yahooSymbol: 'BZ=F'  },

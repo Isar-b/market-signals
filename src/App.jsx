@@ -8,7 +8,7 @@ import ProbabilityPanel from './panels/ProbabilityPanel'
 export default function App() {
   const auth = useAuth()
   const {
-    assets, addAsset, removeAsset,
+    assets, addAsset, removeAsset, moveAsset,
     selectedAsset, setSelectedAsset,
     selectedHorizon, setSelectedHorizon,
   } = useAppState(auth.user)
@@ -27,6 +27,7 @@ export default function App() {
             onSelect={setSelectedAsset}
             onAdd={addAsset}
             onRemove={removeAsset}
+            onMove={moveAsset}
             auth={auth}
           />
         </div>
@@ -78,6 +79,7 @@ export default function App() {
                 setShowAssets(false)
               }}
               onRemove={removeAsset}
+              onMove={moveAsset}
               auth={null}
             />
           </div>

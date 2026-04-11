@@ -112,6 +112,18 @@ export function useAppState(user) {
     })
   }, [user, selectedAsset])
 
+  const moveAsset = useCallback((id, direction) => {
+    setAssets(prev => {
+      const idx = prev.findIndex(a => a.id === id)
+      const newIdx = idx + direction
+      if (idx < 0 || newIdx < 0 || newIdx >= prev.length) return prev
+      const next = [...prev]
+      ;[next[idx], next[newIdx]] = [next[newIdx], next[idx]]
+      syncToServer(next, selectedAsset)
+      return next
+    })
+  }, [user, selectedAsset])
+
   // Sync selected asset changes to server
   const setSelectedAssetAndSync = useCallback((val) => {
     setSelectedAsset(prev => {
@@ -125,6 +137,7 @@ export function useAppState(user) {
     assets,
     addAsset,
     removeAsset,
+    moveAsset,
     selectedAsset,
     setSelectedAsset: setSelectedAssetAndSync,
     selectedHorizon,

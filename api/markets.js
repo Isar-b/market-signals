@@ -220,7 +220,7 @@ export default async function handler(req, res) {
           ? JSON.parse(m.outcomePrices) : m.outcomePrices
         if (Array.isArray(prices) && prices.length > 0) {
           const yesPrice = parseFloat(prices[0])
-          if (yesPrice < 0.05 || yesPrice > 0.99) return false
+          if (yesPrice < 0.02 || yesPrice > 0.98) return false
         }
       } catch { /* keep */ }
       return true

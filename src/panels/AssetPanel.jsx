@@ -29,7 +29,6 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           <AuthButton
             user={auth.user}
             loading={auth.loading}
-            onLoginGoogle={auth.loginWithGoogle}
             onLoginGithub={auth.loginWithGithub}
             onLogout={auth.logout}
           />

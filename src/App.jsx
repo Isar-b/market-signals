@@ -1,14 +1,16 @@
 import { useAppState } from './state/useAppState'
+import { useAuth } from './hooks/useAuth'
 import AssetPanel from './panels/AssetPanel'
 import PerformancePanel from './panels/PerformancePanel'
 import ProbabilityPanel from './panels/ProbabilityPanel'
 
 export default function App() {
+  const auth = useAuth()
   const {
     assets, addAsset, removeAsset,
     selectedAsset, setSelectedAsset,
     selectedHorizon, setSelectedHorizon,
-  } = useAppState()
+  } = useAppState(auth.user)
 
   const asset = assets.find(a => a.id === selectedAsset)
 
@@ -22,6 +24,7 @@ export default function App() {
           onSelect={setSelectedAsset}
           onAdd={addAsset}
           onRemove={removeAsset}
+          auth={auth}
         />
       </div>
 

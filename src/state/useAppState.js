@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { DEFAULT_ASSETS } from '../config/assets'
 
 const STORAGE_KEY_ASSETS = 'market-signals-assets'
@@ -28,59 +28,94 @@ function loadSelectedAsset(assets) {
   return assets[0]?.id || 'SP500'
 }
 
-export function useAppState() {
+export function useAppState(user) {
   const [assets, setAssets] = useState(() => loadAssets())
   const [selectedAsset, setSelectedAsset] = useState(() => loadSelectedAsset(loadAssets()))
   const [selectedHorizon, setSelectedHorizon] = useState('YTD')
+  const syncTimerRef = useRef(null)
 
-  // Persist assets to localStorage
+  // Persist to localStorage (always, for offline cache)
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_ASSETS, JSON.stringify(assets))
   }, [assets])
 
-  // Persist selected asset to localStorage
   useEffect(() => {
     localStorage.setItem(STORAGE_KEY_SELECTED, selectedAsset)
   }, [selectedAsset])
 
+  // When user logs in, sync with server (KV)
+  useEffect(() => {
+    if (!user) return
+
+    fetch('/api/user/assets')
+      .then(res => res.json())
+      .then(data => {
+        if (data.assets && Array.isArray(data.assets) && data.assets.length > 0) {
+          // KV has data — use it
+          setAssets(data.assets)
+          if (data.selected) setSelectedAsset(data.selected)
+        } else {
+          // First login — migrate localStorage to KV
+          syncToServer(assets, selectedAsset)
+        }
+      })
+      .catch(() => { /* KV unavailable, stay with localStorage */ })
+  }, [user?.sub])
+
+  // Debounced sync to server on state changes (when logged in)
+  function syncToServer(currentAssets, currentSelected) {
+    if (!user) return
+    clearTimeout(syncTimerRef.current)
+    syncTimerRef.current = setTimeout(() => {
+      fetch('/api/user/assets', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assets: currentAssets, selected: currentSelected }),
+      }).catch(() => { /* silent fail — localStorage is the backup */ })
+    }, 500)
+  }
+
   const addAsset = useCallback((asset) => {
     setAssets(prev => {
-      // Check for duplicate by id or yahooSymbol
       const exists = prev.some(a => a.id === asset.id || a.yahooSymbol === asset.yahooSymbol)
       if (exists) {
-        // Just select the existing one
         const existing = prev.find(a => a.id === asset.id || a.yahooSymbol === asset.yahooSymbol)
         setSelectedAsset(existing.id)
         return prev
       }
-      return [...prev, asset]
+      const next = [...prev, asset]
+      syncToServer(next, asset.id)
+      return next
     })
-    // Select the newly added asset
     setSelectedAsset(asset.id)
-  }, [])
+  }, [user])
 
   const removeAsset = useCallback((id) => {
     setAssets(prev => {
-      if (prev.length <= 1) return prev // don't remove the last one
+      if (prev.length <= 1) return prev
       const next = prev.filter(a => a.id !== id)
+      const newSelected = selectedAsset === id ? next[0]?.id : selectedAsset
+      if (selectedAsset === id) setSelectedAsset(newSelected)
+      syncToServer(next, newSelected)
       return next
     })
-    // If removing the selected asset, select the first remaining
+  }, [user, selectedAsset])
+
+  // Sync selected asset changes to server
+  const setSelectedAssetAndSync = useCallback((val) => {
     setSelectedAsset(prev => {
-      if (prev === id) {
-        const remaining = assets.filter(a => a.id !== id)
-        return remaining[0]?.id || assets[0]?.id
-      }
-      return prev
+      const next = typeof val === 'function' ? val(prev) : val
+      if (user) syncToServer(assets, next)
+      return next
     })
-  }, [assets])
+  }, [user, assets])
 
   return {
     assets,
     addAsset,
     removeAsset,
     selectedAsset,
-    setSelectedAsset,
+    setSelectedAsset: setSelectedAssetAndSync,
     selectedHorizon,
     setSelectedHorizon,
   }

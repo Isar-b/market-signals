@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import AssetButton from '../components/AssetButton'
 import AssetSearch from '../components/AssetSearch'
+import AuthButton from '../components/AuthButton'
 
-export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove }) {
+export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove, auth }) {
   const existingIds = useMemo(() => new Set(assets.map(a => a.yahooSymbol)), [assets])
 
   return (
@@ -23,10 +24,21 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           />
         ))}
       </div>
-      <div className="mt-auto pt-3 text-[10px] text-text-secondary leading-tight">
-        Created by Isar
-        <br />
-        Powered by Yahoo Finance &amp; Polymarket
+      <div className="mt-auto pt-3 border-t border-border">
+        <div className="mb-2">
+          <AuthButton
+            user={auth.user}
+            loading={auth.loading}
+            onLoginGoogle={auth.loginWithGoogle}
+            onLoginGithub={auth.loginWithGithub}
+            onLogout={auth.logout}
+          />
+        </div>
+        <div className="text-[10px] text-text-secondary leading-tight">
+          Created by Isar
+          <br />
+          Powered by Yahoo Finance &amp; Polymarket
+        </div>
       </div>
     </>
   )

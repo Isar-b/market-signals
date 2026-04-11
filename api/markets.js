@@ -304,32 +304,7 @@ export default async function handler(req, res) {
       if (PRICE_CAP_RE.test(m.question)) priceMarkets.push(m)
       else otherMarkets.push(m)
     }
-    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)]
-
-    // Backfill: if under 5, add non-price candidates the LLM didn't pick
-    // Topic-aware: skip candidates that overlap heavily with already-selected markets
-    if (selected.length < 5) {
-      const selectedIds = new Set(selected.map(m => m.question))
-      const selectedWords = new Set(
-        selected.flatMap(m => m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || [])
-      )
-      const backfill = candidates.filter(m => {
-        if (selectedIds.has(m.question) || PRICE_CAP_RE.test(m.question)) return false
-        const words = m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || []
-        const overlap = words.filter(w => selectedWords.has(w)).length
-        return overlap / Math.max(words.length, 1) < 0.3
-      })
-      for (const m of backfill) {
-        if (selected.length >= 5) break
-        selected.push(m)
-        // Add this market's words to prevent further duplicates
-        for (const w of (m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || [])) {
-          selectedWords.add(w)
-        }
-      }
-    }
-
-    selected = selected.slice(0, 5)
+    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, 5)
 
     // 6. Format response
     const markets = selected.map(m => {

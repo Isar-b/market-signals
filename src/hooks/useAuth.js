@@ -4,7 +4,7 @@ export function useAuth() {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
+  const checkSession = useCallback(() => {
     fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
@@ -17,9 +17,9 @@ export function useAuth() {
       })
   }, [])
 
-  const loginWithGoogle = useCallback(() => {
-    window.location.href = '/api/auth/google'
-  }, [])
+  useEffect(() => {
+    checkSession()
+  }, [checkSession])
 
   const loginWithGithub = useCallback(() => {
     window.location.href = '/api/auth/github'
@@ -31,5 +31,10 @@ export function useAuth() {
       .catch(() => setUser(null))
   }, [])
 
-  return { user, loading, loginWithGoogle, loginWithGithub, logout }
+  // Called after email login/register — re-check session to pick up the new cookie
+  const refreshSession = useCallback(() => {
+    checkSession()
+  }, [checkSession])
+
+  return { user, loading, loginWithGithub, logout, refreshSession }
 }

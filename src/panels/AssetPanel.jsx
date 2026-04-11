@@ -31,6 +31,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
             loading={auth.loading}
             onLoginGithub={auth.loginWithGithub}
             onLogout={auth.logout}
+            onEmailAuth={auth.refreshSession}
           />
         </div>
         <div className="text-[10px] text-text-secondary leading-tight">

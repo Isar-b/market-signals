@@ -65,7 +65,7 @@ export default function App() {
 
         {/* Asset drawer (slides down when open) */}
         {showAssets && (
-          <div className="bg-bg-panel border-b border-border p-3 max-h-[60vh] overflow-y-auto shrink-0">
+          <div className="bg-bg-panel border-b border-border p-3 max-h-[60vh] flex flex-col shrink-0">
             <AssetPanel
               assets={assets}
               selectedAsset={selectedAsset}

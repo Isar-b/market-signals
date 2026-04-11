@@ -149,20 +149,23 @@ app.get('/api/markets', async (req, res) => {
       console.log(`Cached ${allMarkets.length} markets from Polymarket`)
     }
 
-    // 3. Get asset profile from LLM (what it is, what moves its price)
+    // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
     let assetProfile = null
+    let profileKeywords = []
     if (anthropic) {
       try {
-        assetProfile = await getAssetProfile(assetLabel, asset)
-        console.log(`Asset profile for ${asset}: ${assetProfile.substring(0, 100)}...`)
+        const profileResult = await getAssetProfile(assetLabel, asset)
+        assetProfile = profileResult.description
+        profileKeywords = profileResult.keywords
+        console.log(`Asset profile for ${asset}: ${assetProfile.substring(0, 80)}...`)
+        console.log(`Profile keywords: ${profileKeywords.join(', ')}`)
       } catch (err) {
         console.error('Asset profile failed:', err.message)
       }
     }
 
-    // 4. Pre-filter: probability range + keyword/LLM-keyword matching
-    // First, filter ALL markets to only those with 5-99% probability
+    // 4. Pre-filter: probability range + keyword matching
     let viableMarkets = allMarkets.filter(m => {
       try {
         const prices = typeof m.outcomePrices === 'string'
@@ -176,31 +179,22 @@ app.get('/api/markets', async (req, res) => {
       return true
     })
 
-    // Now apply keyword filter: asset-specific patterns + macro patterns
+    // Build keyword patterns: hardcoded asset patterns + LLM-generated keywords + macro
     let assetPatterns = ASSET_PATTERNS[asset] || []
     if (assetPatterns.length === 0) {
-      // For unknown assets, generate patterns from symbol + label
       const dynamicPatterns = []
+      // Symbol and label words
       if (asset) dynamicPatterns.push(new RegExp(`\\b${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
       if (label) {
-        const words = label.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+        label.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
           .split(/\s+/)
-          .filter(w => w.length >= 3 && !['inc', 'ltd', 'corp', 'the', 'and', 'com'].includes(w.toLowerCase()))
-        words.forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
+          .filter(w => w.length >= 3 && !['inc', 'ltd', 'corp', 'the', 'and', 'com', 'plc', 'ord'].includes(w.toLowerCase()))
+          .forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
       }
-      // If we have an asset profile, extract keywords from it too
-      if (assetProfile) {
-        const profileWords = assetProfile
-          .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
-          .split(/\s+/)
-          .filter(w => w.length >= 4)
-          .map(w => w.toLowerCase())
-        // Take unique meaningful words and create patterns
-        const uniqueWords = [...new Set(profileWords)]
-          .filter(w => !['this', 'that', 'with', 'from', 'they', 'their', 'would', 'could', 'about', 'which', 'these', 'those', 'into', 'also', 'such', 'like', 'make', 'more', 'most', 'some', 'than', 'very', 'when', 'what', 'will', 'been', 'have', 'each', 'were', 'then', 'them', 'over', 'does', 'its'].includes(w))
-          .slice(0, 15)
-        uniqueWords.forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
-      }
+      // LLM-generated keywords (these are specific and high-quality)
+      profileKeywords.forEach(kw => {
+        dynamicPatterns.push(new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
+      })
       assetPatterns = dynamicPatterns
     }
 
@@ -306,14 +300,44 @@ function deduplicateCandidates(candidates, assetName) {
 
 async function getAssetProfile(assetLabel, assetSymbol) {
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 150,
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 300,
     messages: [{
       role: 'user',
-      content: `In 2-3 sentences, describe what ${assetLabel} (${assetSymbol}) is and what key factors/sectors/events move its price. Focus on: industry, supply chain dependencies, regulatory exposure, geographic risks, and macro sensitivities. Be specific.`
+      content: `Describe what ${assetLabel} (${assetSymbol}) is and what moves its price. Then provide search keywords.
+
+Return JSON in this exact format:
+{
+  "description": "2-3 sentence description of the asset, its industry, and key price drivers",
+  "keywords": ["keyword1", "keyword2", ...]
+}
+
+The keywords should be specific terms to search prediction markets for events that would move this asset's price. Include:
+- The company/asset name and ticker
+- Direct competitors and partners
+- Key people (CEO, founders)
+- Industry-specific terms
+- Geographic markets (e.g. "UK", "China", "Europe")
+- Relevant indices (e.g. "FTSE", "Nasdaq")
+- Relevant currencies (e.g. "pound", "sterling", "euro")
+- Regulatory bodies (e.g. "FCA", "SEC", "EU")
+- Sector terms (e.g. "semiconductor", "cloud", "oil")
+
+Return 15-25 keywords. Only return the JSON, no other text.`
     }],
   })
-  return response.content[0].text.trim()
+
+  const text = response.content[0].text.trim()
+  try {
+    const parsed = JSON.parse(text)
+    return {
+      description: parsed.description || '',
+      keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
+    }
+  } catch {
+    // If JSON parse fails, treat whole response as description
+    return { description: text, keywords: [] }
+  }
 }
 
 async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {

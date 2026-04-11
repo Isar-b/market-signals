@@ -69,14 +69,43 @@ function deduplicateCandidates(candidates, assetName) {
 
 async function getAssetProfile(assetLabel, assetSymbol) {
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-20250514',
-    max_tokens: 150,
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 300,
     messages: [{
       role: 'user',
-      content: `In 2-3 sentences, describe what ${assetLabel} (${assetSymbol}) is and what key factors/sectors/events move its price. Focus on: industry, supply chain dependencies, regulatory exposure, geographic risks, and macro sensitivities. Be specific.`
+      content: `Describe what ${assetLabel} (${assetSymbol}) is and what moves its price. Then provide search keywords.
+
+Return JSON in this exact format:
+{
+  "description": "2-3 sentence description of the asset, its industry, and key price drivers",
+  "keywords": ["keyword1", "keyword2", ...]
+}
+
+The keywords should be specific terms to search prediction markets for events that would move this asset's price. Include:
+- The company/asset name and ticker
+- Direct competitors and partners
+- Key people (CEO, founders)
+- Industry-specific terms
+- Geographic markets (e.g. "UK", "China", "Europe")
+- Relevant indices (e.g. "FTSE", "Nasdaq")
+- Relevant currencies (e.g. "pound", "sterling", "euro")
+- Regulatory bodies (e.g. "FCA", "SEC", "EU")
+- Sector terms (e.g. "semiconductor", "cloud", "oil")
+
+Return 15-25 keywords. Only return the JSON, no other text.`
     }],
   })
-  return response.content[0].text.trim()
+
+  const text = response.content[0].text.trim()
+  try {
+    const parsed = JSON.parse(text)
+    return {
+      description: parsed.description || '',
+      keywords: Array.isArray(parsed.keywords) ? parsed.keywords : [],
+    }
+  } catch {
+    return { description: text, keywords: [] }
+  }
 }
 
 async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
@@ -168,12 +197,15 @@ export default async function handler(req, res) {
       polymarketCache.timestamp = Date.now()
     }
 
-    // 3. Get asset profile from LLM
+    // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
     let assetProfile = null
+    let profileKeywords = []
     if (anthropic) {
       try {
-        assetProfile = await getAssetProfile(assetLabel, asset)
+        const profileResult = await getAssetProfile(assetLabel, asset)
+        assetProfile = profileResult.description
+        profileKeywords = profileResult.keywords
       } catch (err) {
         console.error('Asset profile failed:', err.message)
       }
@@ -197,18 +229,14 @@ export default async function handler(req, res) {
       const dynamicPatterns = []
       if (asset) dynamicPatterns.push(new RegExp(`\\b${asset.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
       if (label) {
-        const words = label.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
+        label.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
           .split(/\s+/)
-          .filter(w => w.length >= 3 && !['inc', 'ltd', 'corp', 'the', 'and', 'com'].includes(w.toLowerCase()))
-        words.forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
+          .filter(w => w.length >= 3 && !['inc', 'ltd', 'corp', 'the', 'and', 'com', 'plc', 'ord'].includes(w.toLowerCase()))
+          .forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
       }
-      if (assetProfile) {
-        const profileWords = assetProfile.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
-          .split(/\s+/).filter(w => w.length >= 4).map(w => w.toLowerCase())
-        const stopWords = ['this', 'that', 'with', 'from', 'they', 'their', 'would', 'could', 'about', 'which', 'these', 'those', 'into', 'also', 'such', 'like', 'make', 'more', 'most', 'some', 'than', 'very', 'when', 'what', 'will', 'been', 'have', 'each', 'were', 'then', 'them', 'over', 'does', 'its']
-        const uniqueWords = [...new Set(profileWords)].filter(w => !stopWords.includes(w)).slice(0, 15)
-        uniqueWords.forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
-      }
+      profileKeywords.forEach(kw => {
+        dynamicPatterns.push(new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i'))
+      })
       assetPatterns = dynamicPatterns
     }
 

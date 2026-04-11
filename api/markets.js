@@ -192,7 +192,7 @@ export default async function handler(req, res) {
       allMarkets = polymarketCache.markets
     } else {
       const pages = await Promise.all(
-        Array.from({ length: 10 }, (_, i) =>
+        Array.from({ length: 20 }, (_, i) =>
           fetch(`https://gamma-api.polymarket.com/markets?limit=500&active=true&closed=false&order=volume24hr&ascending=false&offset=${i * 500}`)
         )
       )

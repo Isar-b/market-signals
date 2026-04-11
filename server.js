@@ -161,9 +161,9 @@ app.get('/api/markets', async (req, res) => {
     if (polymarketCache.markets && Date.now() - polymarketCache.timestamp < CACHE_TTL) {
       allMarkets = polymarketCache.markets
     } else {
-      console.log('Fetching fresh Polymarket data (5000 markets)...')
+      console.log('Fetching fresh Polymarket data (10000 markets)...')
       const pages = await Promise.all(
-        Array.from({ length: 10 }, (_, i) =>
+        Array.from({ length: 20 }, (_, i) =>
           fetch(`https://gamma-api.polymarket.com/markets?limit=500&active=true&closed=false&order=volume24hr&ascending=false&offset=${i * 500}`)
         )
       )

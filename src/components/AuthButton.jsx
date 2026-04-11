@@ -1,12 +1,10 @@
 import { useState } from 'react'
 
-export default function AuthButton({ user, loading, onLoginGithub, onLogout, onEmailAuth }) {
+export default function AuthButton({ user, loading, onLoginGithub, onLogout }) {
   const [showForm, setShowForm] = useState(false)
-  const [isRegister, setIsRegister] = useState(false)
   const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [name, setName] = useState('')
   const [error, setError] = useState('')
+  const [sent, setSent] = useState(false)
   const [submitting, setSubmitting] = useState(false)
 
   if (loading) {
@@ -33,65 +31,57 @@ export default function AuthButton({ user, loading, onLoginGithub, onLogout, onE
     )
   }
 
-  async function handleSubmit(e) {
+  async function handleSendLink(e) {
     e.preventDefault()
     setError('')
     setSubmitting(true)
 
     try {
-      const endpoint = isRegister ? '/api/auth/register' : '/api/auth/login'
-      const body = isRegister ? { email, password, name } : { email, password }
-
-      const res = await fetch(endpoint, {
+      const res = await fetch('/api/auth/send-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        body: JSON.stringify({ email }),
       })
-
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Something went wrong')
+        setError(data.error || 'Failed to send link')
         setSubmitting(false)
         return
       }
-
-      // Success — reload to pick up the session cookie
-      onEmailAuth()
+      setSent(true)
+      setSubmitting(false)
     } catch {
       setError('Network error')
       setSubmitting(false)
     }
   }
 
+  if (sent) {
+    return (
+      <div className="flex flex-col gap-1.5 text-center">
+        <div className="text-[11px] text-green">Check your email</div>
+        <div className="text-[10px] text-text-secondary">
+          We sent a sign-in link to <span className="text-text-primary">{email}</span>
+        </div>
+        <button
+          onClick={() => { setSent(false); setEmail(''); setError('') }}
+          className="text-[10px] text-text-secondary hover:text-text-primary transition-colors"
+        >
+          Try again
+        </button>
+      </div>
+    )
+  }
+
   if (showForm) {
     return (
-      <form onSubmit={handleSubmit} className="flex flex-col gap-1.5">
-        {isRegister && (
-          <input
-            type="text"
-            placeholder="Name"
-            value={name}
-            onChange={e => setName(e.target.value)}
-            className="w-full px-2 py-1 text-[11px] bg-bg-card border border-border rounded
-              text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
-          />
-        )}
+      <form onSubmit={handleSendLink} className="flex flex-col gap-1.5">
         <input
           type="email"
-          placeholder="Email"
+          placeholder="Enter your email"
           value={email}
           onChange={e => setEmail(e.target.value)}
           required
-          className="w-full px-2 py-1 text-[11px] bg-bg-card border border-border rounded
-            text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
-        />
-        <input
-          type="password"
-          placeholder="Password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          required
-          minLength={6}
           className="w-full px-2 py-1 text-[11px] bg-bg-card border border-border rounded
             text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-accent"
         />
@@ -102,18 +92,11 @@ export default function AuthButton({ user, loading, onLoginGithub, onLogout, onE
           className="w-full px-2 py-1 text-[11px] bg-accent text-white rounded hover:bg-accent-hover
             transition-colors disabled:opacity-50"
         >
-          {submitting ? '...' : isRegister ? 'Create account' : 'Sign in'}
+          {submitting ? 'Sending...' : 'Send sign-in link'}
         </button>
         <button
           type="button"
-          onClick={() => { setIsRegister(!isRegister); setError('') }}
-          className="text-[10px] text-text-secondary hover:text-text-primary transition-colors"
-        >
-          {isRegister ? 'Already have an account? Sign in' : "Don't have an account? Register"}
-        </button>
-        <button
-          type="button"
-          onClick={() => setShowForm(false)}
+          onClick={() => { setShowForm(false); setError('') }}
           className="text-[10px] text-text-secondary hover:text-text-primary transition-colors"
         >
           Back

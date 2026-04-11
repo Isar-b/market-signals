@@ -270,7 +270,18 @@ app.get('/api/markets', async (req, res) => {
       if (PRICE_CAP_RE.test(m.question)) priceMarkets.push(m)
       else otherMarkets.push(m)
     }
-    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, 5)
+    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)]
+
+    // Backfill: if under 5, add non-price candidates the LLM didn't pick
+    if (selected.length < 5) {
+      const selectedIds = new Set(selected.map(m => m.question))
+      const backfill = candidates.filter(m =>
+        !selectedIds.has(m.question) && !PRICE_CAP_RE.test(m.question)
+      )
+      selected = [...selected, ...backfill].slice(0, 5)
+    }
+
+    selected = selected.slice(0, 5)
 
     // 5. Format response — extract tokenId from clobTokenIds
     const markets = selected.map(m => {

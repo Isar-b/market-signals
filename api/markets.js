@@ -38,51 +38,9 @@ const ASSET_LABELS = {
 
 // ─── Helper functions ──────────────────────────────────────────────────────
 
-function extractTopicKey(question) {
-  const topicPatterns = [
-    [/\bfed\b.*\b(rate|interest|bps)\b/i, 'fed-rate'],
-    [/\b(rate|interest)\b.*\bfed\b/i, 'fed-rate'],
-    [/\bfed\b.*\bchair\b/i, 'fed-chair'],
-    [/\bfed rate cuts?\b.*\b20\d{2}\b/i, 'fed-rate-cuts-annual'],
-    [/\brecession\b/i, 'recession'],
-    [/\btariff/i, 'tariffs'],
-    [/\binflation\b/i, 'inflation'],
-    [/\bbank of japan\b/i, 'boj'],
-    [/\bceasefire\b/i, 'ceasefire'],
-    [/\bhormuz\b/i, 'hormuz'],
-    [/\bkharg\b/i, 'kharg'],
-    [/\biran\b/i, 'iran'],
-    [/\blargest company\b.*\bmarket cap\b/i, 'largest-marketcap'],
-    [/\bmarket cap\b.*\blargest\b/i, 'largest-marketcap'],
-    [/\bipo\b/i, 'ipo'],
-    [/\bcrud(e)?\s*oil\b|\bwti\b|\bbrent\b/i, 'crude-oil'],
-    [/\bgold\b(?!en)/i, 'gold-price'],
-    [/\bup or down\b/i, 'daily-direction'],
-  ]
-
-  const q = question.toLowerCase()
-  const matchedTopics = []
-  for (const [pattern, topic] of topicPatterns) {
-    if (pattern.test(q)) matchedTopics.push(topic)
-  }
-
-  const entities = []
-  const entityPatterns = [
-    /\b(tesla|nvidia|apple|microsoft|amazon|alphabet|google|meta|spacex|openai|samsung)\b/i,
-    /\b(tsla|nvda|aapl|msft|amzn|goog|meta|spx|spax)\b/i,
-  ]
-  for (const p of entityPatterns) {
-    const match = q.match(p)
-    if (match) entities.push(match[1].toLowerCase())
-  }
-
-  const key = [...matchedTopics, ...entities].sort().join('|')
-  return key || q.replace(/[^a-z]+/gi, ' ').trim().substring(0, 50)
-}
-
 function deduplicateCandidates(candidates, assetName) {
   const result = []
-  const seenTopics = new Set()
+  const seenNormalized = new Set()
 
   for (const m of candidates) {
     const q = m.question.toLowerCase()
@@ -94,9 +52,15 @@ function deduplicateCandidates(candidates, assetName) {
       if (!isAboutOurAsset) continue
     }
 
-    const normalized = extractTopicKey(q)
-    if (seenTopics.has(normalized)) continue
-    seenTopics.add(normalized)
+    const normalized = q
+      .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '_DATE_')
+      .replace(/\b20\d{2}\b/g, '_YEAR_')
+      .replace(/\b\d{1,2}(st|nd|rd|th)?\b/g, '_D_')
+      .replace(/\s+/g, ' ')
+      .trim()
+
+    if (seenNormalized.has(normalized)) continue
+    seenNormalized.add(normalized)
     result.push(m)
   }
 

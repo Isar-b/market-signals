@@ -19,7 +19,7 @@ export default function App() {
   return (
     <>
       {/* ── Desktop: 3-panel side-by-side ── */}
-      <div className="hidden md:flex h-screen overflow-hidden">
+      <div className="hidden md:flex h-dvh overflow-hidden">
         <div className="w-[15%] min-w-[140px] bg-bg-panel border-r border-border p-3 flex flex-col overflow-visible">
           <AssetPanel
             assets={assets}
@@ -47,7 +47,7 @@ export default function App() {
       </div>
 
       {/* ── Mobile: stacked chart + markets, asset drawer ── */}
-      <div className="md:hidden flex flex-col h-screen overflow-hidden bg-bg-primary">
+      <div className="md:hidden flex flex-col h-dvh overflow-hidden bg-bg-primary">
 
         {/* Mobile top bar */}
         <div className="flex items-center justify-between px-3 py-2 bg-bg-panel border-b border-border shrink-0">

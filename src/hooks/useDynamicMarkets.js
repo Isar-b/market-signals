@@ -1,11 +1,11 @@
 import { useState, useEffect, useRef } from 'react'
 
 const LOADING_STEPS = [
-  'Scanning 5,000 prediction markets...',
+  'Scanning 10,000 prediction markets...',
   'Building asset profile...',
-  'Ranking markets by relevance...',
+  'Matching markets by sector & geography...',
+  'Ranking by relevance...',
   'Selecting top signals...',
-  'Almost there...',
 ]
 
 export function useDynamicMarkets(assetId, assetLabel) {

@@ -244,6 +244,10 @@ app.get('/api/markets', async (req, res) => {
       return bSpecific - aSpecific // asset-specific first
     })
 
+    // Remove sports/entertainment noise unless the asset is sports-related
+    const SPORTS_RE = /\b(vs\.|nba|nfl|mlb|nhl|epl|premier league|la liga|serie a|bundesliga|champions league|world cup|goal scorer|touchdown|home run|slam dunk|win .* series|match|bout|ufc|wwe|grand prix|formula 1|f1 race)\b/i
+    candidates = candidates.filter(m => !SPORTS_RE.test(m.question))
+
     // Cap candidates sent to LLM (too many causes it to ignore later entries)
     candidates = candidates.slice(0, 60)
 

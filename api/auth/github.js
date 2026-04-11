@@ -1,4 +1,4 @@
-import { getBaseUrl } from './_helpers.js'
+import { getBaseUrl } from '../../lib/auth-helpers.js'
 
 export default function handler(req, res) {
   const baseUrl = getBaseUrl(req)

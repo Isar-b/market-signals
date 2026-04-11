@@ -1,4 +1,4 @@
-import { createSessionCookie, getBaseUrl } from '../_helpers.js'
+import { createSessionCookie, getBaseUrl } from '../../../lib/auth-helpers.js'
 
 export default async function handler(req, res) {
   try {

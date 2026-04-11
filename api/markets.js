@@ -88,7 +88,7 @@ Return JSON in this exact format:
 }
 
 The keywords should be specific terms to search prediction markets for events that would move this asset's price. Include:
-- The company/asset name and ticker
+- The company/asset name, ticker, and ALL major brand/product names (e.g. for Google: "Gemini", "Android", "YouTube", "Pixel", "Chrome", "Waymo", "DeepMind")
 - Direct competitors and partners
 - Key people (CEO, founders)
 - Industry-specific terms
@@ -98,7 +98,7 @@ The keywords should be specific terms to search prediction markets for events th
 - Regulatory bodies (e.g. "FCA", "SEC", "EU")
 - Sector terms (e.g. "semiconductor", "cloud", "oil")
 
-Return 15-25 keywords. Only return the JSON, no other text.`
+Return 20-30 keywords. Be exhaustive with product/brand names. Only return the JSON, no other text.`
     }],
   })
 

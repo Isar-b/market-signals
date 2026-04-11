@@ -12,7 +12,7 @@ function notifySubscribers() {
 
 async function fetchAndCache(tokenId) {
   try {
-    const res = await fetch(`/api/clob/price?token_id=${tokenId}&side=BUY`)
+    const res = await fetch(`/api/polymarket?target=clob&path=price&token_id=${tokenId}&side=BUY`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const json = await res.json()
     const parsed = parseFloat(json.price)

@@ -1,6 +1,16 @@
 import { jwtVerify } from 'jose'
 
+// GET /api/auth/session → return current user
+// POST /api/auth/session → logout (clear cookie)
+
 export default async function handler(req, res) {
+  if (req.method === 'POST') {
+    // Logout
+    res.setHeader('Set-Cookie', 'session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0')
+    return res.json({ ok: true })
+  }
+
+  // GET — return current user
   try {
     const cookies = {}
     ;(req.headers.cookie || '').split(';').forEach(part => {

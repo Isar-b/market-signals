@@ -20,7 +20,7 @@ export function useMarketHistory(tokenId, horizon, enabled) {
     // Longer ranges (YTD, 1Y, MAX) omit timestamps — the CLOB API
     // rejects wide ranges. We fetch full history and filter client-side.
     const useTimestamps = horizon === '1D' || horizon === '1W'
-    let url = `/api/clob/prices-history?market=${tokenId}&interval=${polyParams.interval}&fidelity=${polyParams.fidelity}`
+    let url = `/api/polymarket?target=clob&path=prices-history&market=${tokenId}&interval=${polyParams.interval}&fidelity=${polyParams.fidelity}`
     if (useTimestamps) {
       url += `&startTs=${startTs}&endTs=${endTs}`
     }

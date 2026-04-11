@@ -5,7 +5,7 @@ export function useAuth() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    fetch('/api/auth/me')
+    fetch('/api/auth/session')
       .then(res => res.json())
       .then(data => {
         setUser(data.user || null)
@@ -26,7 +26,7 @@ export function useAuth() {
   }, [])
 
   const logout = useCallback(() => {
-    fetch('/api/auth/logout', { method: 'POST' })
+    fetch('/api/auth/session', { method: 'POST' })
       .then(() => setUser(null))
       .catch(() => setUser(null))
   }, [])

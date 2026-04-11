@@ -266,8 +266,16 @@ app.get('/api/markets', async (req, res) => {
       }
     }
 
+    // Deduplicate by question text (same market can have multiple Polymarket entries)
+    const seenQuestions = new Set()
+    selected = selected.filter(m => {
+      if (seenQuestions.has(m.question)) return false
+      seenQuestions.add(m.question)
+      return true
+    })
+
     // Enforce max 2 price/cap markets — code-level, not LLM-dependent
-    const PRICE_CAP_RE = /\b(market cap|price|hit \(|dip to|drop to|close above|close below|up or down|high\)|low\)|\$\d)/i
+    const PRICE_CAP_RE = /\b(market cap|price|hit \(|dip to|drop to|close above|close below|up or down|high\)|low\)|settle|trading day|\$\d)/i
     const priceMarkets = []
     const otherMarkets = []
     for (const m of selected) {
@@ -413,7 +421,8 @@ HARD RULES:
 - REJECT markets about unrelated sectors (e.g. Bitcoin/crypto markets for a non-crypto stock, oil markets for a tech company)
 - REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
 - MAX 2 markets about price targets, price action, or market cap ranking — prioritise non-price markets (products, leadership, regulation, competitors, sector events)
-- If fewer than 5 topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. DO NOT pad with irrelevant markets.
+- REJECT markets about unrelated countries, leaders, or geopolitical events unless they DIRECTLY name ${assetLabel} or its specific industry
+- If fewer than 5 topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. NEVER select irrelevant markets just to fill the list — an empty result is better than wrong results.
 
 Markets:
 ${candidateList}

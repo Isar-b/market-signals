@@ -245,8 +245,12 @@ app.get('/api/markets', async (req, res) => {
     })
 
     // Remove sports/entertainment noise unless the asset is sports-related
-    const SPORTS_RE = /\bvs\.?\s|\b(nba|nfl|mlb|nhl|epl|premier league|la liga|serie a|bundesliga|champions league|world cup|goal scorer|touchdown|home run|slam dunk|win .* series|bout|ufc|wwe|grand prix|formula 1|f1 race|win .*season|subscribers)\b/i
+    const SPORTS_RE = /\bvs\.?\s|\b(nba|nfl|mlb|nhl|epl|premier league|la liga|serie a|bundesliga|champions league|world cup|goal scorer|touchdown|home run|slam dunk|win .* series|bout|ufc|wwe|grand prix|formula 1|f1 race|win .*season|subscribers|lcs|lec|valorant|esport|league of legends)\b/i
     candidates = candidates.filter(m => !SPORTS_RE.test(m.question))
+
+    // Remove election/political noise (unless asset is specifically political/geopolitical)
+    const ELECTION_RE = /\b(win the most seats|parliamentary election|presidential election|win the national list|Nobel Peace Prize|leader of .* end of)\b/i
+    candidates = candidates.filter(m => !ELECTION_RE.test(m.question))
 
     // Cap candidates sent to LLM (too many causes it to ignore later entries)
     candidates = candidates.slice(0, 60)
@@ -275,7 +279,7 @@ app.get('/api/markets', async (req, res) => {
     })
 
     // Enforce max 2 price/cap markets — code-level, not LLM-dependent
-    const PRICE_CAP_RE = /\b(market cap|price|hit \(|dip to|drop to|close above|close below|up or down|high\)|low\)|settle|trading day|\$\d)/i
+    const PRICE_CAP_RE = /\b(market cap|price|hit \(|dip to|drop to|close above|close below|up or down|high\)|low\)|settle|trading day|all[- ]time[- ]high|reach \$|above \$|below \$|\$\d)/i
     const priceMarkets = []
     const otherMarkets = []
     for (const m of selected) {

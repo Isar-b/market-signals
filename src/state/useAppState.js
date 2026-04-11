@@ -29,23 +29,34 @@ function loadSelectedAsset(assets) {
 }
 
 export function useAppState(user) {
-  const [assets, setAssets] = useState(() => loadAssets())
-  const [selectedAsset, setSelectedAsset] = useState(() => loadSelectedAsset(loadAssets()))
+  const [assets, setAssets] = useState(DEFAULT_ASSETS)
+  const [selectedAsset, setSelectedAsset] = useState(DEFAULT_ASSETS[0].id)
   const [selectedHorizon, setSelectedHorizon] = useState('YTD')
   const syncTimerRef = useRef(null)
 
-  // Persist to localStorage (always, for offline cache)
+  // Persist to localStorage only when logged in
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_ASSETS, JSON.stringify(assets))
-  }, [assets])
+    if (user) localStorage.setItem(STORAGE_KEY_ASSETS, JSON.stringify(assets))
+  }, [assets, user])
 
   useEffect(() => {
-    localStorage.setItem(STORAGE_KEY_SELECTED, selectedAsset)
-  }, [selectedAsset])
+    if (user) localStorage.setItem(STORAGE_KEY_SELECTED, selectedAsset)
+  }, [selectedAsset, user])
 
-  // When user logs in, sync with server (KV)
+  // When user logs in, load their saved state (KV first, then localStorage fallback)
   useEffect(() => {
-    if (!user) return
+    if (!user) {
+      // Logged out — reset to defaults
+      setAssets(DEFAULT_ASSETS)
+      setSelectedAsset(DEFAULT_ASSETS[0].id)
+      return
+    }
+
+    // Try loading from localStorage as instant cache while KV fetches
+    const cached = loadAssets()
+    const cachedSelected = loadSelectedAsset(cached)
+    setAssets(cached)
+    setSelectedAsset(cachedSelected)
 
     fetch('/api/user/assets')
       .then(res => res.json())

@@ -43,7 +43,9 @@ function deduplicateCandidates(candidates, assetName) {
   const seenNormalized = new Set()
 
   for (const m of candidates) {
-    const q = m.question.toLowerCase()
+    const q = m.question
+      .replace(/\b[A-Z][a-z]+ [A-Z][a-z]+(?:[- ][A-Z][a-z]+)*/g, '_NAME_')
+      .toLowerCase()
 
     if (/largest company.*market cap/i.test(q) || /market cap.*largest/i.test(q)) {
       const isAboutOurAsset = assetName.split(/\s+/).some(word =>
@@ -53,6 +55,7 @@ function deduplicateCandidates(candidates, assetName) {
     }
 
     const normalized = q
+      .replace(/"[^"]+"/g, '_TITLE_')
       .replace(/\b(january|february|march|april|may|june|july|august|september|october|november|december)\b/gi, '_DATE_')
       .replace(/\b20\d{2}\b/g, '_YEAR_')
       .replace(/\b\d{1,2}(st|nd|rd|th)?\b/g, '_D_')
@@ -98,6 +101,8 @@ The keywords should be specific terms to search prediction markets for events th
 - Relevant currencies (e.g. "pound", "sterling", "euro")
 - Regulatory bodies (e.g. "FCA", "SEC", "EU")
 - Sector terms (e.g. "semiconductor", "cloud", "oil")
+
+IMPORTANT: Treat the asset name as a company/financial instrument, NOT a literal word. For example, "Snowflake" is a cloud data company (not weather/ice), "Apple" is a tech company (not fruit), "Shell" is an oil company (not seashells).
 
 Return 20-30 keywords. Be exhaustive with product/brand names. Only return the JSON, no other text.`
     }],

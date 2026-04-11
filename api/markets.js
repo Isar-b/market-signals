@@ -277,7 +277,7 @@ export default async function handler(req, res) {
     })
 
     // Remove sports/entertainment noise unless the asset is sports-related
-    const SPORTS_RE = /\b(vs\.|nba|nfl|mlb|nhl|epl|premier league|la liga|serie a|bundesliga|champions league|world cup|goal scorer|touchdown|home run|slam dunk|win .* series|match|bout|ufc|wwe|grand prix|formula 1|f1 race)\b/i
+    const SPORTS_RE = /\bvs\.?\s|\b(nba|nfl|mlb|nhl|epl|premier league|la liga|serie a|bundesliga|champions league|world cup|goal scorer|touchdown|home run|slam dunk|win .* series|bout|ufc|wwe|grand prix|formula 1|f1 race|win .*season|subscribers)\b/i
     candidates = candidates.filter(m => !SPORTS_RE.test(m.question))
 
     // Cap candidates sent to LLM
@@ -317,7 +317,7 @@ export default async function handler(req, res) {
         if (selectedIds.has(m.question) || PRICE_CAP_RE.test(m.question)) return false
         const words = m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || []
         const overlap = words.filter(w => selectedWords.has(w)).length
-        return overlap / Math.max(words.length, 1) < 0.5
+        return overlap / Math.max(words.length, 1) < 0.3
       })
       for (const m of backfill) {
         if (selected.length >= 5) break

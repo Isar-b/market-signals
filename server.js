@@ -214,6 +214,19 @@ app.get('/api/markets', async (req, res) => {
     const assetName = (label || ASSET_LABELS[asset] || asset).toLowerCase()
     candidates = deduplicateCandidates(candidates, assetName)
 
+    // Sort: asset-specific matches first, then macro/generic
+    // This ensures the LLM sees the most relevant candidates at the top
+    candidates.sort((a, b) => {
+      const aText = a.question + ' ' + (a.description || '')
+      const bText = b.question + ' ' + (b.description || '')
+      const aSpecific = assetPatterns.some(p => p.test(aText)) ? 1 : 0
+      const bSpecific = assetPatterns.some(p => p.test(bText)) ? 1 : 0
+      return bSpecific - aSpecific // asset-specific first
+    })
+
+    // Cap candidates sent to LLM (too many causes it to ignore later entries)
+    candidates = candidates.slice(0, 60)
+
     console.log(`Pre-filtered to ${candidates.length} candidates for ${asset}`)
 
     // 5. LLM selection (with fallback to top-by-volume)
@@ -293,7 +306,7 @@ function deduplicateCandidates(candidates, assetName) {
 
 async function getAssetProfile(assetLabel, assetSymbol) {
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6-20250514',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: 150,
     messages: [{
       role: 'user',
@@ -314,7 +327,7 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
   ).join('\n')
 
   const response = await anthropic.messages.create({
-    model: 'claude-sonnet-4-6-20250514',
+    model: 'claude-sonnet-4-20250514',
     max_tokens: 256,
     messages: [{
       role: 'user',

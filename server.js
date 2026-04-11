@@ -262,8 +262,15 @@ app.get('/api/markets', async (req, res) => {
       }
     }
 
-    // Cap at 5 final markets
-    selected = selected.slice(0, 5)
+    // Enforce max 2 price/cap markets — code-level, not LLM-dependent
+    const PRICE_CAP_RE = /\b(market cap|price|hit \(|dip to|drop to|close above|close below|up or down|high\)|low\)|\$\d)/i
+    const priceMarkets = []
+    const otherMarkets = []
+    for (const m of selected) {
+      if (PRICE_CAP_RE.test(m.question)) priceMarkets.push(m)
+      else otherMarkets.push(m)
+    }
+    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, 5)
 
     // 5. Format response — extract tokenId from clobTokenIds
     const markets = selected.map(m => {

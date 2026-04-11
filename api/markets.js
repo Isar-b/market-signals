@@ -126,13 +126,19 @@ STEP 1: Group the markets below by topic (e.g. "market cap ranking", "leadership
 STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct impact on ${assetLabel}).
 STEP 3: Return up to 5 markets, each from a DIFFERENT topic group.
 
+PRIORITY ORDER — pick from higher tiers first:
+1. Markets DIRECTLY about ${assetLabel} by name (earnings, leadership, lawsuits, products)
+2. Markets about ${assetLabel}'s specific SECTOR or INDUSTRY (e.g. fintech, EVs, semiconductors)
+3. Markets about ${assetLabel}'s key GEOGRAPHIC markets (e.g. Brazil, China, EU)
+4. Markets about direct competitors or partners by name
+5. Macro/policy events ONLY if they specifically impact ${assetLabel}'s sector or geography
+
 HARD RULES:
 - DIVERSITY IS MANDATORY: never return 2+ markets on the same topic, even if they differ by date or threshold
-- Every market must have a clear, specific link to ${assetLabel}'s price
-- Skip crypto/blockchain markets (unless ${assetLabel} IS crypto)
-- Skip markets about unrelated companies or industries
-- Skip generic macro (Fed, GDP, recession) unless ${assetLabel} is an index
-- If fewer than 5 topics are relevant, return fewer. DO NOT pad with irrelevant markets.
+- Every market must have a clear, specific causal link to ${assetLabel}'s price — you must be able to explain HOW it moves the stock
+- REJECT markets about unrelated sectors (e.g. Bitcoin/crypto markets for a non-crypto stock, oil markets for a tech company)
+- REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
+- If fewer than 5 topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. DO NOT pad with irrelevant markets.
 
 Markets:
 ${candidateList}

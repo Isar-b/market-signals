@@ -57,9 +57,11 @@ function deduplicateCandidates(candidates, assetName) {
       .replace(/\b20\d{2}\b/g, '_YEAR_')
       .replace(/\b\d{1,2}(st|nd|rd|th)?\b/g, '_D_')
       .replace(/\b(largest|second[- ]largest|third[- ]largest|\d+th[- ]largest|biggest|second[- ]biggest|third[- ]biggest)\b/gi, '_RANK_')
-      .replace(/\b(increase|decrease|cut|hike|raise|lower)\b/gi, '_CHANGE_')
-      .replace(/\b(hit|reach|exceed|surpass|drop below|fall below|above|below)\b/gi, '_THRESHOLD_')
+      .replace(/\b(increase|decrease|cut|hike|raise|lower|dip|drop|rally|surge|climb|plunge|crash|soar)\b/gi, '_CHANGE_')
+      .replace(/\b(hit|reach|exceed|surpass|drop below|fall below|above|below|up or down)\b/gi, '_THRESHOLD_')
+      .replace(/\((?:low|high|open|close)\)/gi, '_HL_')
       .replace(/\$[\d,.]+[btmk]?\b/gi, '_PRICE_')
+      .replace(/\bweek of\b/gi, '_WEEK_')
       .replace(/\s+/g, ' ')
       .trim()
 

@@ -253,7 +253,9 @@ export default async function handler(req, res) {
       if (label) {
         label.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, ' ')
           .split(/\s+/)
-          .filter(w => w.length >= 3 && !['inc', 'ltd', 'corp', 'the', 'and', 'com', 'plc', 'ord'].includes(w.toLowerCase()))
+          .filter(w => w.length >= 3
+            && !['inc', 'ltd', 'corp', 'the', 'and', 'com', 'plc', 'ord', 'new', 'index', 'fund', 'trust', 'group', 'jones', 'standard', 'poor', 'average', 'composite', 'holdings', 'global'].includes(w.toLowerCase())
+            && !/^\d+$/.test(w))
           .forEach(w => dynamicPatterns.push(new RegExp(`\\b${w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i')))
       }
       profileKeywords.forEach(kw => {

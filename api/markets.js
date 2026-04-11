@@ -179,9 +179,9 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'asset query param required' })
     }
 
-    // 1. Check per-asset cache
+    // 1. Check per-asset cache (require at least 3 markets to use cache)
     const cached = assetMarketCache.get(asset)
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.markets.length >= 3) {
       return res.json({ markets: cached.markets, source: 'cache' })
     }
 

@@ -15,10 +15,11 @@ async function fetchAndCache(tokenId) {
     const res = await fetch(`/api/clob/price?token_id=${tokenId}&side=BUY`)
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const json = await res.json()
+    const parsed = parseFloat(json.price)
     priceCache.set(tokenId, {
-      price: parseFloat(json.price),
+      price: isNaN(parsed) ? null : parsed,
       timestamp: Date.now(),
-      error: null,
+      error: isNaN(parsed) ? 'Invalid price data' : null,
     })
   } catch (err) {
     priceCache.set(tokenId, {

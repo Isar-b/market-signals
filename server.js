@@ -277,12 +277,25 @@ app.get('/api/markets', async (req, res) => {
     selected = [...otherMarkets, ...priceMarkets.slice(0, 2)]
 
     // Backfill: if under 5, add non-price candidates the LLM didn't pick
+    // Topic-aware: skip candidates that overlap heavily with already-selected markets
     if (selected.length < 5) {
       const selectedIds = new Set(selected.map(m => m.question))
-      const backfill = candidates.filter(m =>
-        !selectedIds.has(m.question) && !PRICE_CAP_RE.test(m.question)
+      const selectedWords = new Set(
+        selected.flatMap(m => m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || [])
       )
-      selected = [...selected, ...backfill].slice(0, 5)
+      const backfill = candidates.filter(m => {
+        if (selectedIds.has(m.question) || PRICE_CAP_RE.test(m.question)) return false
+        const words = m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || []
+        const overlap = words.filter(w => selectedWords.has(w)).length
+        return overlap / Math.max(words.length, 1) < 0.5
+      })
+      for (const m of backfill) {
+        if (selected.length >= 5) break
+        selected.push(m)
+        for (const w of (m.question.toLowerCase().match(/\b[a-z]{4,}\b/g) || [])) {
+          selectedWords.add(w)
+        }
+      }
     }
 
     selected = selected.slice(0, 5)

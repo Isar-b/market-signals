@@ -145,7 +145,7 @@ DO NOT include:
 - Near-duplicate markets (same topic, different dates) — pick nearest future date only
 - Fed Chair confirmation, Bank of Japan, or other central bank appointments unless this asset is directly rate-sensitive
 
-Return 3-5 markets. If fewer than 3 are genuinely relevant, return fewer. Quality over quantity.
+Return exactly 5 markets. You MUST return 5 — if direct matches are limited, include the best available macro/sector markets that have some relevance.
 
 Markets:
 ${candidateList}

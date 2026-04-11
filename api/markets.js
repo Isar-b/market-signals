@@ -248,7 +248,10 @@ export default async function handler(req, res) {
       assetPatterns = dynamicPatterns
     }
 
-    const allPatterns = [...assetPatterns, ...MACRO_PATTERNS]
+    const isIndex = ['SP500', 'NDX'].includes(asset)
+    const allPatterns = isIndex
+      ? [...assetPatterns, ...MACRO_PATTERNS]
+      : assetPatterns
     let candidates = viableMarkets.filter(m => {
       const text = m.question + ' ' + (m.description || '')
       return allPatterns.some(p => p.test(text))

@@ -12,117 +12,122 @@ export default function App() {
     selectedAsset, setSelectedAsset,
     selectedHorizon, setSelectedHorizon,
   } = useAppState(auth.user)
-  const [activeTab, setActiveTab] = useState('chart')
+  const [showAssets, setShowAssets] = useState(false)
 
   const asset = assets.find(a => a.id === selectedAsset)
 
   return (
-    <div className="flex flex-col md:flex-row h-screen overflow-hidden">
-
-      {/* ── Desktop: 3-panel side-by-side. Mobile: tab-based ── */}
-
-      {/* Panel 1: Asset selector */}
-      <div className={`
-        ${activeTab === 'assets' ? 'flex' : 'hidden'} md:flex
-        w-full md:w-[15%] md:min-w-[140px]
-        bg-bg-panel md:border-r border-border p-3 flex-col
-        flex-1 md:flex-initial overflow-visible
-        pb-20 md:pb-3
-      `}>
-        <AssetPanel
-          assets={assets}
-          selectedAsset={selectedAsset}
-          onSelect={(id) => {
-            setSelectedAsset(id)
-            setActiveTab('chart') // switch to chart after selecting on mobile
-          }}
-          onAdd={(asset) => {
-            addAsset(asset)
-            setActiveTab('chart')
-          }}
-          onRemove={removeAsset}
-          auth={auth}
-        />
+    <>
+      {/* ── Desktop: 3-panel side-by-side ── */}
+      <div className="hidden md:flex h-screen overflow-hidden">
+        <div className="w-[15%] min-w-[140px] bg-bg-panel border-r border-border p-3 flex flex-col overflow-visible">
+          <AssetPanel
+            assets={assets}
+            selectedAsset={selectedAsset}
+            onSelect={setSelectedAsset}
+            onAdd={addAsset}
+            onRemove={removeAsset}
+            auth={auth}
+          />
+        </div>
+        <div className="w-[50%] bg-bg-primary p-4 flex flex-col overflow-hidden">
+          <PerformancePanel
+            asset={asset}
+            selectedHorizon={selectedHorizon}
+            onHorizonChange={setSelectedHorizon}
+          />
+        </div>
+        <div className="w-[35%] bg-bg-panel border-l border-border p-4 overflow-y-auto">
+          <ProbabilityPanel
+            asset={asset}
+            selectedHorizon={selectedHorizon}
+          />
+        </div>
       </div>
 
-      {/* Panel 2: Performance chart */}
-      <div className={`
-        ${activeTab === 'chart' ? 'flex' : 'hidden'} md:flex
-        w-full md:w-[50%]
-        bg-bg-primary p-4 flex-col
-        flex-1 md:flex-initial overflow-hidden
-        pb-20 md:pb-4
-      `}>
-        <PerformancePanel
-          asset={asset}
-          selectedHorizon={selectedHorizon}
-          onHorizonChange={setSelectedHorizon}
-        />
-      </div>
+      {/* ── Mobile: stacked chart + markets, asset drawer ── */}
+      <div className="md:hidden flex flex-col h-screen overflow-hidden bg-bg-primary">
 
-      {/* Panel 3: Probability cards */}
-      <div className={`
-        ${activeTab === 'markets' ? 'flex' : 'hidden'} md:flex
-        w-full md:w-[35%]
-        bg-bg-panel md:border-l border-border p-4 flex-col
-        flex-1 md:flex-initial overflow-y-auto
-        pb-20 md:pb-4
-      `}>
-        <ProbabilityPanel
-          asset={asset}
-          selectedHorizon={selectedHorizon}
-        />
-      </div>
-
-      {/* ── Mobile bottom tab bar ── */}
-      <div className="md:hidden fixed bottom-0 left-0 right-0 bg-bg-panel border-t border-border
-        flex items-center justify-around py-2 px-4 z-50">
-        <TabButton
-          active={activeTab === 'assets'}
-          onClick={() => setActiveTab('assets')}
-          label="Assets"
-          icon={
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M3 3h7v7H3zM14 3h7v7h-7zM3 14h7v7H3zM14 14h7v7h-7z"/>
+        {/* Mobile top bar */}
+        <div className="flex items-center justify-between px-3 py-2 bg-bg-panel border-b border-border shrink-0">
+          <button
+            onClick={() => setShowAssets(!showAssets)}
+            className="flex items-center gap-1.5 text-sm font-semibold text-text-primary"
+          >
+            {asset?.label || 'Select asset'}
+            <svg className={`w-3.5 h-3.5 text-text-secondary transition-transform ${showAssets ? 'rotate-180' : ''}`}
+              viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <polyline points="6 9 12 15 18 9"/>
             </svg>
-          }
-        />
-        <TabButton
-          active={activeTab === 'chart'}
-          onClick={() => setActiveTab('chart')}
-          label={asset?.label || 'Chart'}
-          icon={
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
-            </svg>
-          }
-        />
-        <TabButton
-          active={activeTab === 'markets'}
-          onClick={() => setActiveTab('markets')}
-          label="Markets"
-          icon={
-            <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
-            </svg>
-          }
-        />
+          </button>
+          <AuthButton auth={auth} />
+        </div>
+
+        {/* Asset drawer (slides down when open) */}
+        {showAssets && (
+          <div className="bg-bg-panel border-b border-border p-3 max-h-[60vh] overflow-y-auto shrink-0">
+            <AssetPanel
+              assets={assets}
+              selectedAsset={selectedAsset}
+              onSelect={(id) => {
+                setSelectedAsset(id)
+                setShowAssets(false)
+              }}
+              onAdd={(a) => {
+                addAsset(a)
+                setShowAssets(false)
+              }}
+              onRemove={removeAsset}
+              auth={null}
+            />
+          </div>
+        )}
+
+        {/* Scrollable content: chart + markets stacked */}
+        <div className="flex-1 overflow-y-auto">
+          {/* Chart section */}
+          <div className="p-3 h-[45vh] min-h-[280px] flex flex-col">
+            <PerformancePanel
+              asset={asset}
+              selectedHorizon={selectedHorizon}
+              onHorizonChange={setSelectedHorizon}
+            />
+          </div>
+
+          {/* Markets section */}
+          <div className="p-3 bg-bg-panel border-t border-border">
+            <ProbabilityPanel
+              asset={asset}
+              selectedHorizon={selectedHorizon}
+            />
+          </div>
+        </div>
       </div>
-    </div>
+    </>
   )
 }
 
-function TabButton({ active, onClick, label, icon }) {
+// Compact auth button for mobile top bar
+function AuthButton({ auth }) {
+  if (!auth) return null
+  if (auth.loading) return null
+
+  if (auth.user) {
+    return (
+      <div className="flex items-center gap-1.5">
+        {auth.user.picture && (
+          <img src={auth.user.picture} alt="" className="w-5 h-5 rounded-full" referrerPolicy="no-referrer" />
+        )}
+        <button onClick={auth.logout} className="text-[10px] text-text-secondary">
+          Sign out
+        </button>
+      </div>
+    )
+  }
+
   return (
-    <button
-      onClick={onClick}
-      className={`flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors
-        ${active ? 'text-accent' : 'text-text-secondary'}`}
-    >
-      {icon}
-      <span className="text-[10px] font-medium">{label}</span>
+    <button onClick={auth.loginWithGithub} className="text-[10px] text-text-secondary hover:text-text-primary">
+      Sign in
     </button>
   )
 }

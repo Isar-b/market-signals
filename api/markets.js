@@ -69,7 +69,7 @@ function deduplicateCandidates(candidates, assetName) {
 
 async function getAssetProfile(assetLabel, assetSymbol) {
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 150,
     messages: [{
       role: 'user',
@@ -88,7 +88,7 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
   ).join('\n')
 
   const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+    model: 'claude-sonnet-4-6-20250514',
     max_tokens: 256,
     messages: [{
       role: 'user',
@@ -109,7 +109,7 @@ DO NOT include:
 - Near-duplicate markets (same topic, different dates) — pick nearest future date only
 - Fed Chair confirmation, Bank of Japan, or other central bank appointments unless this asset is directly rate-sensitive
 
-Return exactly 5 markets. You MUST return 5 — if direct matches are limited, include the best available macro/sector markets that have some relevance.
+Return exactly 10 markets, ranked from most to least relevant. You MUST return 10 — if direct matches are limited, include the best available macro/sector markets. Ensure the 10 are DIVERSE — cover different themes, not 10 variations of the same topic.
 
 Markets:
 ${candidateList}
@@ -130,7 +130,7 @@ Return ONLY a JSON array of indices, e.g. [0, 3, 7]. No other text.`
 
   return indices
     .filter(i => typeof i === 'number' && i >= 0 && i < candidates.length)
-    .slice(0, 5)
+    .slice(0, 10)
     .map(i => candidates[i])
 }
 
@@ -231,6 +231,9 @@ export default async function handler(req, res) {
         selected = candidates.slice(0, 5)
       }
     }
+
+    // Cap at 5 final markets
+    selected = selected.slice(0, 5)
 
     // 6. Format response
     const markets = selected.map(m => {

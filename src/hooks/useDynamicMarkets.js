@@ -1,9 +1,37 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
+
+const LOADING_STEPS = [
+  'Scanning 5,000 prediction markets...',
+  'Building asset profile...',
+  'Ranking markets by relevance...',
+  'Selecting top signals...',
+  'Almost there...',
+]
 
 export function useDynamicMarkets(assetId, assetLabel) {
   const [markets, setMarkets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [loadingStep, setLoadingStep] = useState(0)
+  const stepTimerRef = useRef(null)
+
+  // Cycle through loading steps while loading
+  useEffect(() => {
+    if (!loading) {
+      setLoadingStep(0)
+      clearInterval(stepTimerRef.current)
+      return
+    }
+
+    setLoadingStep(0)
+    let step = 0
+    stepTimerRef.current = setInterval(() => {
+      step = Math.min(step + 1, LOADING_STEPS.length - 1)
+      setLoadingStep(step)
+    }, 2000)
+
+    return () => clearInterval(stepTimerRef.current)
+  }, [loading])
 
   useEffect(() => {
     if (!assetId) return
@@ -36,5 +64,10 @@ export function useDynamicMarkets(assetId, assetLabel) {
     return () => { cancelled = true }
   }, [assetId, assetLabel])
 
-  return { markets, loading, error }
+  return {
+    markets,
+    loading,
+    error,
+    loadingMessage: LOADING_STEPS[loadingStep],
+  }
 }

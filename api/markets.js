@@ -94,27 +94,29 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
       role: 'user',
       content: `You are selecting prediction markets for a financial dashboard. The user is tracking: ${assetLabel}.
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}
-Pick the markets from the list below that a trader watching ${assetLabel} would most want to see. Use the asset description above to judge relevance.
+Select exactly 10 markets from the list below, ranked most to least relevant.
 
-STRICT RELEVANCE TEST — only include a market if you can explain in one sentence WHY it would move ${assetLabel}'s price. Examples:
-- Tariff markets → relevant to companies with China/international supply chains
-- Fed rate decisions → relevant to rate-sensitive sectors (real estate, growth stocks, indices)
-- Iran/OPEC/Hormuz → relevant to oil & energy, NOT to unrelated companies
-- Oil price targets → relevant to oil assets, airlines, shipping, NOT to software or footwear
-- "Largest company by market cap" → ONLY include if it's about ${assetLabel} itself, never about other companies
+SELF-CHECK: For each market you consider, ask: "Would a portfolio manager holding ${assetLabel} check this market daily?" If no, skip it.
 
-DO NOT include:
-- Markets with only a vague/indirect connection (e.g. "oil prices" for a footwear company)
-- Generic macro events that affect everything equally, unless this is a broad market index
-- Near-duplicate markets (same topic, different dates) — pick nearest future date only
-- Fed Chair confirmation, Bank of Japan, or other central bank appointments unless this asset is directly rate-sensitive
+PRIORITY ORDER:
+1. Markets DIRECTLY about ${assetLabel} itself (price targets, earnings, products, leadership, M&A)
+2. Markets about ${assetLabel}'s direct competitors, partners, or supply chain (e.g. OpenAI for Microsoft, TSMC for Nvidia)
+3. Markets about the specific sector/industry ${assetLabel} operates in
+4. Macro events with a DIRECT causal link to ${assetLabel} (e.g. Fed rates for banks, tariffs for importers)
 
-Return exactly 10 markets, ranked from most to least relevant. You MUST return 10 — if direct matches are limited, include the best available macro/sector markets. Ensure the 10 are DIVERSE — cover different themes, not 10 variations of the same topic.
+HARD EXCLUSIONS — never include these:
+- Cryptocurrency, blockchain, or token markets (unless ${assetLabel} IS a crypto asset)
+- Markets about companies unrelated to ${assetLabel} (e.g. SpaceX for Microsoft, Tesla for Apple)
+- "Largest company by market cap" about any company OTHER than ${assetLabel}
+- Generic macro that affects all stocks equally (Fed Chair appointments, Bank of Japan, GDP) — ONLY include if nothing better is available
+- Near-duplicate markets (same question, different dates) — pick nearest future date only
+
+DIVERSITY: Cover 10 different themes. Never pick 2+ markets on the same narrow topic.
 
 Markets:
 ${candidateList}
 
-Return ONLY a JSON array of indices, e.g. [0, 3, 7]. No other text.`
+Return ONLY a JSON array of 10 indices, e.g. [0, 3, 7, 12, 15, 20, 25, 30, 35, 40]. No other text.`
     }],
   })
 
@@ -154,14 +156,14 @@ export default async function handler(req, res) {
     if (polymarketCache.markets && Date.now() - polymarketCache.timestamp < CACHE_TTL) {
       allMarkets = polymarketCache.markets
     } else {
-      const [page1, page2] = await Promise.all([
-        fetch('https://gamma-api.polymarket.com/markets?limit=500&active=true&closed=false&order=volume24hr&ascending=false'),
-        fetch('https://gamma-api.polymarket.com/markets?limit=500&active=true&closed=false&order=volume24hr&ascending=false&offset=500'),
-      ])
-      if (!page1.ok) throw new Error(`Gamma API returned ${page1.status}`)
-      const data1 = await page1.json()
-      const data2 = page2.ok ? await page2.json() : []
-      allMarkets = [...data1, ...data2]
+      const pages = await Promise.all(
+        Array.from({ length: 10 }, (_, i) =>
+          fetch(`https://gamma-api.polymarket.com/markets?limit=500&active=true&closed=false&order=volume24hr&ascending=false&offset=${i * 500}`)
+        )
+      )
+      if (!pages[0].ok) throw new Error(`Gamma API returned ${pages[0].status}`)
+      const pageData = await Promise.all(pages.map(p => p.ok ? p.json() : []))
+      allMarkets = pageData.flat()
       polymarketCache.markets = allMarkets
       polymarketCache.timestamp = Date.now()
     }

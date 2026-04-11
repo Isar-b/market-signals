@@ -1,6 +1,4 @@
-import { clearSessionCookie } from '../../lib/auth-helpers.js'
-
 export default function handler(req, res) {
-  res.setHeader('Set-Cookie', clearSessionCookie())
+  res.setHeader('Set-Cookie', 'session=; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=0')
   res.json({ ok: true })
 }

@@ -1,22 +1,18 @@
-import { createSessionCookie, getBaseUrl } from '../../../lib/auth-helpers.js'
+import { SignJWT } from 'jose'
 
 export default async function handler(req, res) {
   try {
     const { code } = req.query
-    if (!code) {
-      return res.status(400).json({ error: 'Missing authorization code' })
-    }
+    if (!code) return res.status(400).json({ error: 'Missing code' })
 
-    const baseUrl = getBaseUrl(req)
+    const proto = req.headers['x-forwarded-proto'] || 'https'
+    const host = req.headers['x-forwarded-host'] || req.headers.host
+    const baseUrl = `${proto}://${host}`
     const redirectUri = `${baseUrl}/api/auth/github/callback`
 
-    // Exchange code for access token
     const tokenRes = await fetch('https://github.com/login/oauth/access_token', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
       body: JSON.stringify({
         client_id: process.env.GITHUB_CLIENT_ID,
         client_secret: process.env.GITHUB_CLIENT_SECRET,
@@ -31,32 +27,35 @@ export default async function handler(req, res) {
       return res.redirect(302, `${baseUrl}/?auth_error=token_exchange_failed`)
     }
 
-    // Fetch user profile
     const userRes = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${tokens.access_token}` },
     })
     const user = await userRes.json()
 
-    // Fetch email (may not be in profile)
     let email = user.email
     if (!email) {
       const emailRes = await fetch('https://api.github.com/user/emails', {
         headers: { Authorization: `Bearer ${tokens.access_token}` },
       })
       const emails = await emailRes.json()
-      const primary = emails.find(e => e.primary) || emails[0]
+      const primary = Array.isArray(emails) ? (emails.find(e => e.primary) || emails[0]) : null
       email = primary?.email
     }
 
-    const cookie = await createSessionCookie({
+    const secret = new TextEncoder().encode(process.env.JWT_SECRET)
+    const jwt = await new SignJWT({
       sub: `github:${user.id}`,
       name: user.name || user.login,
       email,
       picture: user.avatar_url,
       provider: 'github',
     })
+      .setProtectedHeader({ alg: 'HS256' })
+      .setIssuedAt()
+      .setExpirationTime('30d')
+      .sign(secret)
 
-    res.setHeader('Set-Cookie', cookie)
+    res.setHeader('Set-Cookie', `session=${jwt}; HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=2592000`)
     res.redirect(302, baseUrl + '/')
   } catch (err) {
     console.error('GitHub callback error:', err)

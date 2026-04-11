@@ -1,12 +1,11 @@
-import { getBaseUrl } from '../../lib/auth-helpers.js'
-
 export default function handler(req, res) {
-  const baseUrl = getBaseUrl(req)
-  const redirectUri = `${baseUrl}/api/auth/github/callback`
+  const proto = req.headers['x-forwarded-proto'] || 'https'
+  const host = req.headers['x-forwarded-host'] || req.headers.host
+  const baseUrl = `${proto}://${host}`
 
   const params = new URLSearchParams({
     client_id: process.env.GITHUB_CLIENT_ID,
-    redirect_uri: redirectUri,
+    redirect_uri: `${baseUrl}/api/auth/github/callback`,
     scope: 'read:user user:email',
   })
 

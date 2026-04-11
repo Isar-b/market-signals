@@ -116,38 +116,46 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
     `${i}. "${m.question}" (24h vol: $${Math.round(Number(m.volume24hr || 0)).toLocaleString()})`
   ).join('\n')
 
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 256,
-    messages: [{
-      role: 'user',
-      content: `You are selecting prediction markets for a financial dashboard. The user is tracking: ${assetLabel}.
+  const prompt = `You are selecting prediction markets for a financial dashboard. The user is tracking: ${assetLabel}.
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}
-Select exactly 10 markets from the list below, ranked most to least relevant.
+From the list below, select the markets most relevant to ${assetLabel}. For EACH market you pick, you must be able to complete this sentence: "This market is relevant because [specific reason it affects ${assetLabel}'s price]."
 
-SELF-CHECK: For each market you consider, ask: "Would a portfolio manager holding ${assetLabel} check this market daily?" If no, skip it.
+PRIORITY (strict order):
+1. Markets DIRECTLY about ${assetLabel} or its parent company
+2. Markets about ${assetLabel}'s direct competitors or partners by name
+3. Markets about ${assetLabel}'s specific industry/sector (not generic tech/business)
+4. Macro events with a CLEAR, SPECIFIC causal link to ${assetLabel}
 
-PRIORITY ORDER:
-1. Markets DIRECTLY about ${assetLabel} itself (price targets, earnings, products, leadership, M&A)
-2. Markets about ${assetLabel}'s direct competitors, partners, or supply chain (e.g. OpenAI for Microsoft, TSMC for Nvidia)
-3. Markets about the specific sector/industry ${assetLabel} operates in
-4. Macro events with a DIRECT causal link to ${assetLabel} (e.g. Fed rates for banks, tariffs for importers)
+NEVER include:
+- Crypto/blockchain markets (unless ${assetLabel} IS crypto)
+- Markets about unrelated companies
+- "Largest company by market cap" about other companies
+- Generic macro (Fed Chair, Bank of Japan, GDP) unless ${assetLabel} is an index or bank
+- IPO markets for companies unrelated to ${assetLabel}'s industry
+- Near-duplicates (same topic, different dates)
 
-HARD EXCLUSIONS — never include these:
-- Cryptocurrency, blockchain, or token markets (unless ${assetLabel} IS a crypto asset)
-- Markets about companies unrelated to ${assetLabel} (e.g. SpaceX for Microsoft, Tesla for Apple)
-- "Largest company by market cap" about any company OTHER than ${assetLabel}
-- Generic macro that affects all stocks equally (Fed Chair appointments, Bank of Japan, GDP) — ONLY include if nothing better is available
-- Near-duplicate markets (same question, different dates) — pick nearest future date only
-
-DIVERSITY: Cover 10 different themes. Never pick 2+ markets on the same narrow topic.
+Return 5-10 markets. If fewer than 5 are genuinely relevant, return fewer. DO NOT pad with irrelevant markets.
 
 Markets:
 ${candidateList}
 
-Return ONLY a JSON array of 10 indices, e.g. [0, 3, 7, 12, 15, 20, 25, 30, 35, 40]. No other text.`
-    }],
-  })
+Return ONLY a JSON array of indices, e.g. [0, 3, 7]. No other text.`
+
+  // Try Sonnet first (better reasoning), fall back to Haiku
+  let response
+  try {
+    response = await anthropic.messages.create({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    })
+  } catch {
+    response = await anthropic.messages.create({
+      model: 'claude-haiku-4-5-20251001',
+      max_tokens: 256,
+      messages: [{ role: 'user', content: prompt }],
+    })
+  }
 
   const text = response.content[0].text.trim()
   let indices

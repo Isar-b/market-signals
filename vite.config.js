@@ -6,15 +6,21 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/clob': {
+      // Polymarket proxies (must come before /api catch-all)
+      '/api/clob': {
         target: 'https://clob.polymarket.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/clob/, ''),
+        rewrite: (path) => path.replace(/^\/api\/clob/, ''),
       },
-      '/gamma': {
+      '/api/gamma': {
         target: 'https://gamma-api.polymarket.com',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/gamma/, ''),
+        rewrite: (path) => path.replace(/^\/api\/gamma/, ''),
+      },
+      // Express server for chart, search, markets
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true,
       },
     },
   },

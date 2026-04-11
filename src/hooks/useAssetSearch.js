@@ -20,7 +20,7 @@ export function useAssetSearch() {
     timerRef.current = setTimeout(() => {
       let cancelled = false
 
-      fetch(`http://localhost:3001/api/search?q=${encodeURIComponent(query)}`)
+      fetch(`/api/search?q=${encodeURIComponent(query)}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
           return res.json()

@@ -12,7 +12,7 @@ export function usePriceData(symbol, horizon) {
     setLoading(true)
     setError(null)
 
-    fetch(`http://localhost:3001/api/chart?symbol=${encodeURIComponent(symbol)}&horizon=${encodeURIComponent(horizon)}`)
+    fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}&horizon=${encodeURIComponent(horizon)}`)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()

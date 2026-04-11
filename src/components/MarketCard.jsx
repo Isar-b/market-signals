@@ -88,7 +88,7 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
           {histLoading ? (
             <div className="text-text-secondary text-xs py-4 animate-pulse">Loading chart...</div>
           ) : (
-            <ProbabilityChart data={history} />
+            <ProbabilityChart data={history} horizon={horizon} />
           )}
         </div>
       )}

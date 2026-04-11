@@ -1,6 +1,6 @@
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts'
 
-export default function ProbabilityChart({ data }) {
+export default function ProbabilityChart({ data, horizon }) {
   if (!data || data.length === 0) {
     return <div className="text-text-secondary text-xs py-4">No history data available</div>
   }
@@ -10,10 +10,7 @@ export default function ProbabilityChart({ data }) {
       <LineChart data={data} margin={{ top: 5, right: 5, left: 0, bottom: 5 }}>
         <XAxis
           dataKey="date"
-          tickFormatter={(val) => {
-            const d = new Date(val)
-            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
-          }}
+          tickFormatter={(val) => formatXTick(val, horizon)}
           stroke="#4a5568"
           tick={{ fontSize: 10, fill: '#94a3b8' }}
           axisLine={false}
@@ -38,7 +35,12 @@ export default function ProbabilityChart({ data }) {
             fontSize: 12,
           }}
           formatter={(val) => [`${(val * 100).toFixed(1)}%`, 'Probability']}
-          labelFormatter={(val) => new Date(val).toLocaleDateString()}
+          labelFormatter={(val) => {
+            const d = new Date(val)
+            return horizon === '1D'
+              ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+              : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+          }}
         />
         <Line
           type="monotone"
@@ -51,4 +53,21 @@ export default function ProbabilityChart({ data }) {
       </LineChart>
     </ResponsiveContainer>
   )
+}
+
+function formatXTick(val, horizon) {
+  const d = new Date(val)
+  switch (horizon) {
+    case '1D':
+      return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+    case '1W':
+      return d.toLocaleDateString('en-US', { weekday: 'short' })
+    case 'YTD':
+    case '1Y':
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+    case 'MAX':
+      return d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' })
+    default:
+      return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
+  }
 }

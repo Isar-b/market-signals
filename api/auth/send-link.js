@@ -29,7 +29,7 @@ export default async function handler(req, res) {
     const magicLink = `${proto}://${host}/api/auth/verify?token=${token}`
 
     // Send the email
-    await resend.emails.send({
+    const { error: sendError } = await resend.emails.send({
       from: 'Market Signals <onboarding@resend.dev>',
       to: normalizedEmail,
       subject: 'Sign in to Market Signals',
@@ -47,9 +47,14 @@ export default async function handler(req, res) {
       `,
     })
 
+    if (sendError) {
+      console.error('Resend error:', sendError)
+      return res.status(500).json({ error: sendError.message || 'Email send failed' })
+    }
+
     res.json({ ok: true })
   } catch (err) {
     console.error('Send link error:', err)
-    res.status(500).json({ error: 'Failed to send login link' })
+    res.status(500).json({ error: err.message || 'Failed to send login link' })
   }
 }

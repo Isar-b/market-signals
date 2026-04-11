@@ -23,6 +23,11 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           />
         ))}
       </div>
+      <div className="mt-auto pt-3 text-[10px] text-text-secondary leading-tight">
+        Created by Isar
+        <br />
+        Powered by Yahoo Finance &amp; Polymarket
+      </div>
     </>
   )
 }

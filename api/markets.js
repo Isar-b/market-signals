@@ -138,6 +138,7 @@ HARD RULES:
 - Every market must have a clear, specific causal link to ${assetLabel}'s price — you must be able to explain HOW it moves the stock
 - REJECT markets about unrelated sectors (e.g. Bitcoin/crypto markets for a non-crypto stock, oil markets for a tech company)
 - REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
+- MAX 2 markets about price targets, price action, or market cap ranking — prioritise non-price markets (products, leadership, regulation, competitors, sector events)
 - If fewer than 5 topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. DO NOT pad with irrelevant markets.
 
 Markets:

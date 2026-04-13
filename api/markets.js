@@ -233,8 +233,11 @@ export default async function handler(req, res) {
       }
     }
 
-    // 4. Pre-filter: probability range + keyword matching
+    // 4. Pre-filter: exclude closed/resolved/expired + probability range
+    const now = Date.now()
     let viableMarkets = allMarkets.filter(m => {
+      if (m.closed || !m.active || m.acceptingOrders === false) return false
+      if (m.endDateIso && new Date(m.endDateIso).getTime() < now) return false
       try {
         const prices = typeof m.outcomePrices === 'string'
           ? JSON.parse(m.outcomePrices) : m.outcomePrices

@@ -1,6 +1,7 @@
 export const HORIZONS = [
   { id: '1D',  label: '1D'  },
   { id: '1W',  label: '1W'  },
+  { id: '1M',  label: '1M'  },
   { id: 'YTD', label: 'YTD' },
   { id: '1Y',  label: '1Y'  },
   { id: 'MAX', label: 'Max' },
@@ -10,6 +11,7 @@ export const HORIZONS = [
 export const HORIZON_MAP = {
   '1D':  { period1: '-1d',  interval: '5m'  },
   '1W':  { period1: '-7d',  interval: '1h'  },
+  '1M':  { period1: '-30d', interval: '1d'  },
   'YTD': { period1: 'ytd',  interval: '1d'  },
   '1Y':  { period1: '-1y',  interval: '1d'  },
   'MAX': { period1: '-10y', interval: '1wk' },
@@ -19,6 +21,7 @@ export const HORIZON_MAP = {
 export const POLY_INTERVAL_MAP = {
   '1D':  { interval: 'max', fidelity: 60   },
   '1W':  { interval: 'max', fidelity: 360  },
+  '1M':  { interval: 'max', fidelity: 1440 },
   'YTD': { interval: 'max', fidelity: 1440 },
   '1Y':  { interval: 'max', fidelity: 1440 },
   'MAX': { interval: 'max', fidelity: 1440 },
@@ -32,6 +35,7 @@ export function getPolyTimestamps(horizonId) {
   switch (horizonId) {
     case '1D':  return { startTs: now - DAY,       endTs: now }
     case '1W':  return { startTs: now - 7 * DAY,   endTs: now }
+    case '1M':  return { startTs: now - 30 * DAY,  endTs: now }
     case 'YTD': {
       const jan1 = Math.floor(new Date(new Date().getFullYear(), 0, 1).getTime() / 1000)
       return { startTs: jan1, endTs: now }

@@ -86,7 +86,7 @@ export default function App() {
         )}
 
         {/* Pinned chart */}
-        <div className="p-3 h-[35vh] min-h-[220px] flex flex-col shrink-0">
+        <div className="px-3 pt-2 pb-1 h-[30vh] min-h-[200px] flex flex-col shrink-0">
           <PerformancePanel
             asset={asset}
             selectedHorizon={selectedHorizon}

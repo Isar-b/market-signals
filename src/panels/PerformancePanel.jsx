@@ -13,22 +13,22 @@ export default function PerformancePanel({ asset, selectedHorizon, onHorizonChan
 
   return (
     <>
-      {/* Header row */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-baseline gap-3">
-          <h2 className="text-lg font-semibold text-text-primary">{asset?.label}</h2>
+      {/* Header */}
+      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-2">
+        <div className="flex items-baseline gap-2 min-w-0">
+          <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">{asset?.label}</h2>
           {currentPrice != null && !loading && (
             <>
-              <span className="text-xl font-bold text-text-primary">
+              <span className="text-lg md:text-xl font-bold text-text-primary whitespace-nowrap">
                 ${currentPrice.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </span>
-              <span className={`text-sm font-medium ${changePercent >= 0 ? 'text-green' : 'text-red'}`}>
+              <span className={`text-xs md:text-sm font-medium whitespace-nowrap ${changePercent >= 0 ? 'text-green' : 'text-red'}`}>
                 {changePercent >= 0 ? '+' : ''}{changePercent.toFixed(2)}%
               </span>
             </>
           )}
         </div>
-        <div className="flex gap-1">
+        <div className="flex gap-0.5 md:gap-1">
           {HORIZONS.map(h => (
             <HorizonButton
               key={h.id}

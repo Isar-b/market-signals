@@ -8,6 +8,7 @@ function buildChartParams(horizon) {
   switch (horizon) {
     case '1D':  return { period1: new Date(now - DAY),         interval: '5m'  }
     case '1W':  return { period1: new Date(now - 7 * DAY),     interval: '1h'  }
+    case '1M':  return { period1: new Date(now - 30 * DAY),   interval: '1d'  }
     case 'YTD': return { period1: `${new Date().getFullYear()}-01-01`, interval: '1d' }
     case '1Y':  return { period1: new Date(now - 365 * DAY),   interval: '1d'  }
     case 'MAX': return { period1: new Date(now - 3650 * DAY),  interval: '1wk' }

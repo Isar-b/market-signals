@@ -103,6 +103,12 @@ export default function App() {
               selectedHorizon={selectedHorizon}
             />
           </div>
+
+          {/* Footer */}
+          <div className="px-3 py-4 text-center text-[10px] text-text-secondary leading-tight">
+            Created by Isar<br />
+            Powered by Yahoo Finance &amp; Polymarket
+          </div>
         </div>
       </div>
     </>

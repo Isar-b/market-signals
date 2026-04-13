@@ -85,19 +85,18 @@ export default function App() {
           </div>
         )}
 
-        {/* Scrollable content: chart + markets stacked */}
-        <div className="flex-1 overflow-y-auto">
-          {/* Chart section */}
-          <div className="p-3 h-[45vh] min-h-[280px] flex flex-col">
-            <PerformancePanel
-              asset={asset}
-              selectedHorizon={selectedHorizon}
-              onHorizonChange={setSelectedHorizon}
-            />
-          </div>
+        {/* Pinned chart */}
+        <div className="p-3 h-[35vh] min-h-[220px] flex flex-col shrink-0">
+          <PerformancePanel
+            asset={asset}
+            selectedHorizon={selectedHorizon}
+            onHorizonChange={setSelectedHorizon}
+          />
+        </div>
 
-          {/* Markets section */}
-          <div className="p-3 bg-bg-panel border-t border-border">
+        {/* Scrollable markets */}
+        <div className="flex-1 overflow-y-auto border-t border-border">
+          <div className="p-3 bg-bg-panel">
             <ProbabilityPanel
               asset={asset}
               selectedHorizon={selectedHorizon}

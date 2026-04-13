@@ -120,7 +120,7 @@ Return 20-30 keywords. Be exhaustive with product/brand names. Only return the J
   }
 }
 
-async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
+async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, marketLimit = 5) {
   if (!anthropic) throw new Error('ANTHROPIC_API_KEY not configured')
 
   assetLabel = assetLabel || ASSET_LABELS[assetId] || assetId
@@ -132,7 +132,7 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile) {
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}
 STEP 1: Group the markets below by topic (e.g. "market cap ranking", "leadership", "product launch", "tariffs", "interest rates", etc.)
 STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct impact on ${assetLabel}).
-STEP 3: Return up to 5 markets, each from a DIFFERENT topic group.
+STEP 3: Return up to ${marketLimit} markets, each from a DIFFERENT topic group.
 
 PRIORITY ORDER — pick from higher tiers first:
 1. Markets DIRECTLY about ${assetLabel} by name (earnings, leadership, lawsuits, products)
@@ -148,7 +148,7 @@ HARD RULES:
 - REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
 - MAX 2 markets about price targets, price action, or market cap ranking — prioritise non-price markets (products, leadership, regulation, competitors, sector events)
 - REJECT markets about unrelated countries, leaders, or geopolitical events unless they DIRECTLY name ${assetLabel} or its specific industry
-- If fewer than 5 topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. NEVER select irrelevant markets just to fill the list — an empty result is better than wrong results.
+- If fewer than ${marketLimit} topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. NEVER select irrelevant markets just to fill the list — an empty result is better than wrong results.
 
 Markets:
 ${candidateList}
@@ -183,7 +183,7 @@ Return ONLY a JSON array of indices, e.g. [0, 3, 7]. No other text.`
 
   return indices
     .filter(i => typeof i === 'number' && i >= 0 && i < candidates.length)
-    .slice(0, 10)
+    .slice(0, marketLimit)
     .map(i => candidates[i])
 }
 
@@ -268,6 +268,7 @@ export default async function handler(req, res) {
     }
 
     const isIndex = ['SP500', 'NDX'].includes(asset)
+    const marketLimit = isIndex ? 10 : 5
     const allPatterns = isIndex
       ? [...assetPatterns, ...MACRO_PATTERNS]
       : assetPatterns
@@ -301,14 +302,14 @@ export default async function handler(req, res) {
 
     // 5. LLM selection
     let selected
-    if (candidates.length <= 5) {
+    if (candidates.length <= marketLimit) {
       selected = candidates
     } else {
       try {
-        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile)
+        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile, marketLimit)
       } catch (err) {
         console.error('LLM selection failed:', err.message)
-        selected = candidates.slice(0, 5)
+        selected = candidates.slice(0, marketLimit)
       }
     }
 
@@ -328,7 +329,7 @@ export default async function handler(req, res) {
       if (PRICE_CAP_RE.test(m.question)) priceMarkets.push(m)
       else otherMarkets.push(m)
     }
-    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, 5)
+    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, marketLimit)
 
     // 6. Format response
     const markets = selected.map(m => {

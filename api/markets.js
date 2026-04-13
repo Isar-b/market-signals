@@ -162,6 +162,7 @@ HARD RULES:
 - REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
 - MAX 2 markets about price targets, price action, or market cap ranking — prioritise non-price markets (products, leadership, regulation, competitors, sector events)
 - REJECT markets about unrelated countries, leaders, or geopolitical events unless they DIRECTLY name ${assetLabel} or its specific industry
+- IPO markets: only include if the company is a major constituent of ${assetLabel} or large enough to significantly move the index (e.g. SpaceX). Skip small/niche company IPOs.
 - If fewer than ${marketLimit} topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. NEVER select irrelevant markets just to fill the list — an empty result is better than wrong results.
 
 Markets:

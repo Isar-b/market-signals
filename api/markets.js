@@ -235,6 +235,8 @@ export default async function handler(req, res) {
 
     // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
+    const isIndex = ['SP500', 'NDX'].includes(asset)
+    const marketLimit = isIndex ? 10 : 5
     let assetProfile = null
     let profileKeywords = []
     if (anthropic) {
@@ -291,8 +293,6 @@ export default async function handler(req, res) {
       assetPatterns = dynamicPatterns
     }
 
-    const isIndex = ['SP500', 'NDX'].includes(asset)
-    const marketLimit = isIndex ? 10 : 5
     const allPatterns = isIndex
       ? [...assetPatterns, ...MACRO_PATTERNS]
       : assetPatterns

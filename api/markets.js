@@ -120,7 +120,21 @@ Return 20-30 keywords. Be exhaustive with product/brand names. Only return the J
   }
 }
 
-async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, marketLimit = 5) {
+async function getNewsContext(assetLabel) {
+  const response = await anthropic.messages.create({
+    model: 'claude-haiku-4-5-20251001',
+    max_tokens: 300,
+    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
+    messages: [{
+      role: 'user',
+      content: `What are the top 5 news stories and themes moving ${assetLabel} this week? Reply as a brief bullet list, under 150 words.`
+    }],
+  })
+  const textBlock = response.content.find(b => b.type === 'text')
+  return textBlock?.text || ''
+}
+
+async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, marketLimit = 5, newsContext = '') {
   if (!anthropic) throw new Error('ANTHROPIC_API_KEY not configured')
 
   assetLabel = assetLabel || ASSET_LABELS[assetId] || assetId
@@ -129,7 +143,7 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, mark
   ).join('\n')
 
   const prompt = `You are selecting prediction markets for a financial dashboard tracking: ${assetLabel}.
-${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}
+${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}${newsContext ? `\nCURRENT NEWS (prioritise markets related to these themes):\n${newsContext}\n` : ''}
 STEP 1: Group the markets below by topic (e.g. "market cap ranking", "leadership", "product launch", "tariffs", "interest rates", etc.)
 STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct impact on ${assetLabel}).
 STEP 3: Return up to ${marketLimit} markets, each from a DIFFERENT topic group.
@@ -233,6 +247,16 @@ export default async function handler(req, res) {
       }
     }
 
+    // 3b. For indices, get current news context via web search
+    let newsContext = ''
+    if (isIndex && anthropic) {
+      try {
+        newsContext = await getNewsContext(assetLabel)
+      } catch (err) {
+        console.error('News context failed:', err.message)
+      }
+    }
+
     // 4. Pre-filter: exclude closed/resolved/expired + probability range
     const now = Date.now()
     let viableMarkets = allMarkets.filter(m => {
@@ -306,7 +330,7 @@ export default async function handler(req, res) {
       selected = candidates
     } else {
       try {
-        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile, marketLimit)
+        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile, marketLimit, newsContext)
       } catch (err) {
         console.error('LLM selection failed:', err.message)
         selected = candidates.slice(0, marketLimit)

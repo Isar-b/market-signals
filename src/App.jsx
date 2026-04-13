@@ -20,7 +20,7 @@ export default function App() {
     <>
       {/* ── Desktop: 3-panel side-by-side ── */}
       <div className="hidden md:flex h-dvh overflow-hidden">
-        <div className="w-[15%] min-w-[140px] bg-bg-panel border-r border-border p-3 flex flex-col overflow-visible">
+        <div className="w-[18%] min-w-[170px] bg-bg-panel border-r border-border p-3 flex flex-col overflow-visible">
           <AssetPanel
             assets={assets}
             selectedAsset={selectedAsset}
@@ -31,14 +31,14 @@ export default function App() {
             auth={auth}
           />
         </div>
-        <div className="w-[50%] bg-bg-primary p-4 flex flex-col overflow-hidden">
+        <div className="w-[45%] bg-bg-primary p-4 flex flex-col overflow-hidden">
           <PerformancePanel
             asset={asset}
             selectedHorizon={selectedHorizon}
             onHorizonChange={setSelectedHorizon}
           />
         </div>
-        <div className="w-[35%] bg-bg-panel border-l border-border p-4 overflow-y-auto">
+        <div className="w-[37%] bg-bg-panel border-l border-border p-4 overflow-y-auto">
           <ProbabilityPanel
             asset={asset}
             selectedHorizon={selectedHorizon}

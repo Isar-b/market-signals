@@ -19,3 +19,7 @@ body {
   color: var(--color-text-primary);
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }
+
+.recharts-wrapper, .recharts-wrapper svg {
+  outline: none !important;
+}

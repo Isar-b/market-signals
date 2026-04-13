@@ -236,7 +236,8 @@ export default async function handler(req, res) {
 
     // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
-    const isIndex = ['SP500', 'NDX'].includes(asset)
+    const INDEX_RE = /\b(s&p|index|composite|dow jones|nasdaq|ftse|russell|nikkei|hang seng|stoxx|dax\b|cac\b|vix|cboe|nyse|kospi|sensex|ibovespa|tsx)\b/i
+    const isIndex = ['SP500', 'NDX', 'OIL', 'GOLD'].includes(asset) || INDEX_RE.test(assetLabel)
     const marketLimit = isIndex ? 10 : 5
     let assetProfile = null
     let profileKeywords = []

@@ -45,7 +45,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           <div className="text-[10px] text-text-secondary leading-tight">
             Created by Isar
             <br />
-            Powered by Yahoo Finance, Hyperliquid &amp; Polymarket
+            Powered by Yahoo Finance, Hyperliquid, Polymarket &amp; FRED
           </div>
         </div>
       )}

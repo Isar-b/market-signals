@@ -1,4 +1,4 @@
-export default function AssetButton({ label, source, isSelected, onClick, onRemove, canRemove, onMoveUp, onMoveDown }) {
+export default function AssetButton({ label, source, isSelected, onClick, onRemove, canRemove, onMoveUp, onMoveDown, locked }) {
   const isHL = source === 'hyperliquid'
   return (
     <div className="relative group flex items-center">
@@ -19,39 +19,41 @@ export default function AssetButton({ label, source, isSelected, onClick, onRemo
               </span>
             )}
           </span>
-          <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
-            <button
-              onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
-              disabled={!onMoveUp}
-              className={`w-7 h-7 md:w-5 md:h-5 flex items-center justify-center rounded text-xs
-                ${!onMoveUp ? 'invisible' : isSelected ? 'text-white/60 active:bg-white/20 md:hover:text-white' : 'text-text-secondary active:bg-bg-primary md:hover:text-text-primary'}`}
-              title="Move up"
-            >
-              ▲
-            </button>
-            <button
-              onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
-              disabled={!onMoveDown}
-              className={`w-7 h-7 md:w-5 md:h-5 flex items-center justify-center rounded text-xs
-                ${!onMoveDown ? 'invisible' : isSelected ? 'text-white/60 active:bg-white/20 md:hover:text-white' : 'text-text-secondary active:bg-bg-primary md:hover:text-text-primary'}`}
-              title="Move down"
-            >
-              ▼
-            </button>
-            {onRemove && canRemove && (
+          {!locked && (
+            <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <button
-                onClick={(e) => { e.stopPropagation(); onRemove() }}
+                onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}
+                disabled={!onMoveUp}
                 className={`w-7 h-7 md:w-5 md:h-5 flex items-center justify-center rounded text-xs
-                  ${isSelected
-                    ? 'text-white/60 active:bg-white/20 md:hover:text-white'
-                    : 'text-text-secondary active:bg-bg-primary md:hover:text-red'
-                  }`}
-                title="Remove asset"
+                  ${!onMoveUp ? 'invisible' : isSelected ? 'text-white/60 active:bg-white/20 md:hover:text-white' : 'text-text-secondary active:bg-bg-primary md:hover:text-text-primary'}`}
+                title="Move up"
               >
-                ✕
+                ▲
               </button>
-            )}
-          </div>
+              <button
+                onClick={(e) => { e.stopPropagation(); onMoveDown?.() }}
+                disabled={!onMoveDown}
+                className={`w-7 h-7 md:w-5 md:h-5 flex items-center justify-center rounded text-xs
+                  ${!onMoveDown ? 'invisible' : isSelected ? 'text-white/60 active:bg-white/20 md:hover:text-white' : 'text-text-secondary active:bg-bg-primary md:hover:text-text-primary'}`}
+                title="Move down"
+              >
+                ▼
+              </button>
+              {onRemove && canRemove && (
+                <button
+                  onClick={(e) => { e.stopPropagation(); onRemove() }}
+                  className={`w-7 h-7 md:w-5 md:h-5 flex items-center justify-center rounded text-xs
+                    ${isSelected
+                      ? 'text-white/60 active:bg-white/20 md:hover:text-white'
+                      : 'text-text-secondary active:bg-bg-primary md:hover:text-red'
+                    }`}
+                  title="Remove asset"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+          )}
         </div>
       </button>
     </div>

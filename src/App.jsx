@@ -19,6 +19,7 @@ export default function App() {
   const [mobileNewsOpen, setMobileNewsOpen] = useState(true)
 
   const asset = assets.find(a => a.id === selectedAsset)
+  const isLoggedIn = !!auth.user
 
   return (
     <>
@@ -33,6 +34,7 @@ export default function App() {
             onRemove={removeAsset}
             onMove={moveAsset}
             auth={auth}
+            isLoggedIn={isLoggedIn}
           />
         </div>
         <div className="w-[43%] bg-bg-primary p-4 flex flex-col overflow-hidden">
@@ -105,6 +107,7 @@ export default function App() {
               onRemove={removeAsset}
               onMove={moveAsset}
               auth={null}
+              isLoggedIn={isLoggedIn}
             />
           </div>
         )}

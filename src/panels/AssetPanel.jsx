@@ -3,7 +3,7 @@ import AssetButton from '../components/AssetButton'
 import AssetSearch from '../components/AssetSearch'
 import AuthButton from '../components/AuthButton'
 
-export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove, onMove, auth }) {
+export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove, onMove, auth, isLoggedIn }) {
   const existingIds = useMemo(() => new Set([
     ...assets.map(a => a.yahooSymbol).filter(Boolean),
     ...assets.map(a => a.hlSymbol).filter(Boolean),
@@ -14,7 +14,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
       <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-3">
         Assets
       </h2>
-      <AssetSearch onAdd={onAdd} existingIds={existingIds} />
+      <AssetSearch onAdd={onAdd} existingIds={existingIds} disabled={!isLoggedIn} />
       <div className="flex flex-col gap-1 overflow-y-auto flex-1 min-h-0">
         {assets.map((asset, i) => (
           <AssetButton
@@ -27,6 +27,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
             canRemove={assets.length > 1}
             onMoveUp={i > 0 ? () => onMove(asset.id, -1) : null}
             onMoveDown={i < assets.length - 1 ? () => onMove(asset.id, 1) : null}
+            locked={!isLoggedIn}
           />
         ))}
       </div>

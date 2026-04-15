@@ -1,10 +1,11 @@
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useState } from 'react'
 import { useAssetSearch } from '../hooks/useAssetSearch'
 
-export default function AssetSearch({ onAdd, existingIds }) {
+export default function AssetSearch({ onAdd, existingIds, disabled }) {
   const { query, setQuery, results, loading, clear } = useAssetSearch()
   const dropdownRef = useRef(null)
   const inputRef = useRef(null)
+  const [showLoginHint, setShowLoginHint] = useState(false)
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -32,6 +33,28 @@ export default function AssetSearch({ onAdd, existingIds }) {
 
   return (
     <div className="relative mb-3">
+      {disabled ? (
+        <div
+          className="relative group"
+          onClick={() => setShowLoginHint(true)}
+          onMouseLeave={() => setShowLoginHint(false)}
+        >
+          <input
+            type="text"
+            disabled
+            placeholder="Search assets..."
+            title="Sign in with GitHub to customize assets"
+            className="w-full px-2.5 py-1.5 text-xs bg-bg-card border border-border rounded-lg
+              text-text-secondary placeholder:text-text-secondary/50 opacity-50 cursor-not-allowed"
+          />
+          {showLoginHint && (
+            <div className="absolute left-0 right-0 top-full mt-1 px-3 py-2 text-[11px] text-text-secondary
+              bg-bg-card border border-border rounded-lg shadow-lg z-20 text-center">
+              Sign in with GitHub to search &amp; customize assets
+            </div>
+          )}
+        </div>
+      ) : (
       <input
         ref={inputRef}
         type="text"
@@ -42,6 +65,7 @@ export default function AssetSearch({ onAdd, existingIds }) {
           text-text-primary placeholder:text-text-secondary
           focus:outline-none focus:border-accent transition-colors"
       />
+      )}
 
       {showDropdown && (
         <div

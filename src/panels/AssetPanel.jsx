@@ -38,6 +38,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
               user={auth.user}
               loading={auth.loading}
               onLoginGithub={auth.loginWithGithub}
+              onLoginGoogle={auth.loginWithGoogle}
               onLogout={auth.logout}
             />
           </div>

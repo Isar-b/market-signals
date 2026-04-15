@@ -42,7 +42,7 @@ export default function AssetSearch({ onAdd, existingIds, disabled }) {
               text-text-secondary placeholder:text-text-secondary/50 opacity-50 cursor-not-allowed"
           />
           <p className="text-[10px] text-text-secondary/70 mt-1 px-0.5">
-            Sign in with GitHub to search &amp; customize assets
+            Sign in to search &amp; customize assets
           </p>
         </div>
       ) : (

@@ -87,7 +87,7 @@ export default function App() {
               <polyline points="6 9 12 15 18 9"/>
             </svg>
           </button>
-          <AuthButton auth={auth} />
+          <MobileAuthButton auth={auth} />
         </div>
 
         {/* Asset drawer (slides down when open) */}
@@ -174,7 +174,7 @@ export default function App() {
 }
 
 // Compact auth button for mobile top bar
-function AuthButton({ auth }) {
+function MobileAuthButton({ auth }) {
   if (!auth) return null
   if (auth.loading) return null
 
@@ -192,8 +192,14 @@ function AuthButton({ auth }) {
   }
 
   return (
-    <button onClick={auth.loginWithGithub} className="text-[10px] text-text-secondary hover:text-text-primary">
-      Sign in
-    </button>
+    <div className="flex items-center gap-1.5">
+      <button onClick={auth.loginWithGithub} className="text-[10px] text-text-secondary hover:text-text-primary">
+        GitHub
+      </button>
+      <span className="text-[10px] text-text-secondary/40">|</span>
+      <button onClick={auth.loginWithGoogle} className="text-[10px] text-text-secondary hover:text-text-primary">
+        Google
+      </button>
+    </div>
   )
 }

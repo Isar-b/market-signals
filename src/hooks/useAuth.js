@@ -25,6 +25,10 @@ export function useAuth() {
     window.location.href = '/api/auth/github'
   }, [])
 
+  const loginWithGoogle = useCallback(() => {
+    window.location.href = '/api/auth/google'
+  }, [])
+
   const logout = useCallback(() => {
     fetch('/api/auth/session', { method: 'POST' })
       .then(() => setUser(null))
@@ -36,5 +40,5 @@ export function useAuth() {
     checkSession()
   }, [checkSession])
 
-  return { user, loading, loginWithGithub, logout, refreshSession }
+  return { user, loading, loginWithGithub, loginWithGoogle, logout, refreshSession }
 }

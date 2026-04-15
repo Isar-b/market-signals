@@ -61,7 +61,7 @@ export default function App() {
                     : 'text-text-secondary hover:text-text-primary'
                   }`}
               >
-                {tab === 'markets' ? 'Markets' : tab === 'news' ? 'News' : 'Economy'}
+                {tab === 'markets' ? 'Event Markets' : tab === 'news' ? 'News' : 'Economy'}
               </button>
             ))}
           </div>
@@ -136,7 +136,7 @@ export default function App() {
               className="w-full flex items-center justify-between px-3 py-2.5 border-b border-border"
             >
               <span className="text-xs font-semibold uppercase tracking-wider text-text-secondary">
-                Prediction Markets
+                Event Markets
               </span>
               <svg className={`w-3.5 h-3.5 text-text-secondary transition-transform ${mobileMarketsOpen ? 'rotate-180' : ''}`}
                 viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">

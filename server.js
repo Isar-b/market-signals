@@ -582,35 +582,54 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, mark
     `${i}. "${m.question}" (24h vol: $${Math.round(Number(m.volume24hr || 0)).toLocaleString()})`
   ).join('\n')
 
-  const prompt = `You are selecting prediction markets for a financial dashboard tracking: ${assetLabel}.
+  const prompt = `You are a strict editor selecting prediction markets for a financial dashboard tracking: ${assetLabel}.
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}${newsContext ? `\nCURRENT NEWS (prioritise markets related to these themes):\n${newsContext}\n` : ''}
-STEP 1: Group the markets below by topic. Be STRICT about grouping — these are ALL the same topic and you must pick only ONE:
-  - "Fed Chair confirmed" / "Fed Chair nomination" / "Fed Chair withdrawal" / "Jerome Powell out" → all ONE topic: "Fed leadership"
-  - "S&P hits X" / "S&P hits Y" / "SPY hits Z" → all ONE topic: "price targets"
-  - "Bitcoin hits 100k" / "BTC performance" → all ONE topic: "Bitcoin price"
-STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct relevance).
-STEP 3: Return up to ${marketLimit} markets, each from a DIFFERENT topic group.
+YOUR TASK: From the candidate markets below, select up to ${marketLimit} that are DIVERSE, RELEVANT, and NON-DUPLICATIVE.
 
-PRIORITY ORDER — pick from higher tiers first:
-1. Markets DIRECTLY about ${assetLabel} by name (earnings, leadership, lawsuits, products)
-2. Markets about ${assetLabel}'s specific SECTOR or INDUSTRY
-3. Markets about ${assetLabel}'s key GEOGRAPHIC markets
-4. Markets about direct competitors or partners by name
-5. Macro/policy events ONLY if they have a SPECIFIC, DIRECT impact on ${assetLabel}
+━━━ STEP 1: NARRATIVE GROUPING (this is the most important step) ━━━
 
-HARD RULES:
-- DEDUP STRICTLY: if two markets are about the same person, same event, or same theme with different dates/thresholds/framing, they are DUPLICATES — pick only one
-- Every market must have a clear, specific causal link to ${assetLabel}'s price — ask yourself "how SPECIFICALLY does this move ${assetLabel}?" If you can't answer in one sentence, reject it
-- REJECT markets about unrelated asset classes (e.g. crypto markets for a stock index, oil for a tech company, stock markets for a crypto asset) unless the market explicitly names ${assetLabel}
-- REJECT generic macro (Fed Chair, GDP, recession, inflation) unless ${assetLabel} IS a broad market index — even then, max 1 generic macro market
-- MAX 2 markets about price targets or market cap — prioritise non-price markets
-- REJECT markets about unrelated countries or leaders unless they DIRECTLY name ${assetLabel}'s sector
-- Return an EMPTY array [] if nothing is relevant — never pad with weak matches
+Group markets by their UNDERLYING NARRATIVE — the real-world story or event they relate to. Two markets are part of the SAME narrative if:
+- They involve the same person in the same role (even with different dates/thresholds)
+- They are different angles on the same event (confirmation vs departure vs withdrawal)
+- They track the same metric with different targets (price > X vs price > Y)
+- One is a precondition or consequence of the other
+
+EXAMPLES — all of these are ONE narrative each, pick only ONE market from each:
+- "Will Kevin Warsh be confirmed as Fed Chair?" / "Kevin Warsh confirmed by May 1?" / "Jerome Powell out from Fed Board by May 30?" / "Kevin Warsh nomination withdrawn by May 15?" → ALL ONE NARRATIVE: "Fed Chair transition". Pick the single highest-volume one.
+- "S&P 500 hit 7,050 in June?" / "SPY hit $660 Week of April 13?" / "S&P 500 close above 6,000?" → ALL ONE NARRATIVE: "S&P price targets". Pick one.
+- "Will Bitcoin have best performance in 2026?" / "BTC above 100k by June?" / "Bitcoin market cap passes gold?" → ALL ONE NARRATIVE: "Bitcoin performance". Pick one.
+- "Trump announces tariffs by April 17?" / "New tariffs on China by May?" / "US-China trade deal by June?" → ALL ONE NARRATIVE: "trade war/tariffs". Pick one.
+- "US recession by end of 2026?" / "GDP growth below 1%?" / "Unemployment above 5%?" → ALL ONE NARRATIVE: "recession risk". Pick one.
+
+━━━ STEP 2: RELEVANCE FILTER ━━━
+
+For each narrative group, ask: "Does this SPECIFICALLY and DIRECTLY affect ${assetLabel}'s price?"
+
+REJECT if:
+- The market is about a DIFFERENT ASSET CLASS entirely. Examples of what to reject:
+  • Bitcoin/crypto markets when ${assetLabel} is a stock or index (unless it literally mentions ${assetLabel})
+  • Oil/energy markets when ${assetLabel} is a tech stock
+  • Stock index markets when ${assetLabel} is a cryptocurrency
+- The connection is vague or requires 3+ logical leaps ("Fed Chair → interest rates → maybe affects stocks somehow" is TOO VAGUE for individual stocks; it's borderline acceptable for broad market indices like S&P 500)
+- The market is about a generic macro theme (GDP, recession, inflation, Fed policy) and ${assetLabel} is an individual stock — these belong on index dashboards, not stock dashboards
+
+━━━ STEP 3: SELECTION ━━━
+
+From the surviving narrative groups, pick the SINGLE best market from each group (highest 24h volume = most liquid/interesting). Return up to ${marketLimit} total, prioritising:
+1. Markets that literally name ${assetLabel} (earnings, products, lawsuits, leadership)
+2. Markets about ${assetLabel}'s specific sector
+3. Markets about ${assetLabel}'s geographic exposure
+4. Markets about named competitors or partners
+5. Broad macro — but MAXIMUM 1 macro market total, and only if ${assetLabel} is a broad index
+
+FINAL CHECKS before returning:
+- Count how many narratives you selected. If two selections are really the same story told differently, DROP one.
+- If you have fewer than ${marketLimit} good matches, that's fine. Return fewer. An empty array [] is better than irrelevant padding.
 
 Markets:
 ${candidateList}
 
-Return ONLY a JSON array of indices, e.g. [0, 3, 7]. No other text.`
+Return ONLY a JSON array of the index numbers you selected, e.g. [0, 3, 7]. No explanation, no other text.`
 
   // Try Sonnet first (better reasoning), fall back to Haiku
   let response

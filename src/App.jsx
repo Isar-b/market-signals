@@ -61,13 +61,12 @@ export default function App() {
               </button>
             ))}
           </div>
-          {/* Tab content */}
-          <div className="flex-1 overflow-y-auto p-4">
-            {desktopTab === 'markets' ? (
-              <ProbabilityPanel asset={asset} selectedHorizon={selectedHorizon} />
-            ) : (
-              <NewsPanel asset={asset} />
-            )}
+          {/* Tab content — both rendered, inactive hidden to preserve state */}
+          <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'markets' ? 'hidden' : ''}`}>
+            <ProbabilityPanel asset={asset} selectedHorizon={selectedHorizon} />
+          </div>
+          <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'news' ? 'hidden' : ''}`}>
+            <NewsPanel asset={asset} />
           </div>
         </div>
       </div>
@@ -137,11 +136,9 @@ export default function App() {
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
-            {mobileMarketsOpen && (
-              <div className="p-3">
-                <ProbabilityPanel asset={asset} selectedHorizon={selectedHorizon} />
-              </div>
-            )}
+            <div className={`p-3 ${!mobileMarketsOpen ? 'hidden' : ''}`}>
+              <ProbabilityPanel asset={asset} selectedHorizon={selectedHorizon} />
+            </div>
 
             {/* Collapsible News section */}
             <button
@@ -156,11 +153,9 @@ export default function App() {
                 <polyline points="6 9 12 15 18 9"/>
               </svg>
             </button>
-            {mobileNewsOpen && (
-              <div className="p-3">
-                <NewsPanel asset={asset} />
-              </div>
-            )}
+            <div className={`p-3 ${!mobileNewsOpen ? 'hidden' : ''}`}>
+              <NewsPanel asset={asset} />
+            </div>
           </div>
         </div>
 

@@ -14,7 +14,7 @@ export default function PerformancePanel({ asset, selectedHorizon, onHorizonChan
   return (
     <>
       {/* Header */}
-      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 mb-2">
+      <div className="flex items-center justify-between gap-2 mb-1">
         <div className="flex items-baseline gap-2 min-w-0">
           <h2 className="text-base md:text-lg font-semibold text-text-primary truncate">{asset?.label}</h2>
           {currentPrice != null && !loading && (
@@ -28,24 +28,22 @@ export default function PerformancePanel({ asset, selectedHorizon, onHorizonChan
             </>
           )}
         </div>
-        <div className="flex items-center gap-1 md:gap-2">
-          <div className="flex gap-0.5 md:gap-1">
-            {HORIZONS.map(h => (
-              <HorizonButton
-                key={h.id}
-                label={h.label}
-                isSelected={selectedHorizon === h.id}
-                onClick={() => onHorizonChange(h.id)}
-              />
-            ))}
-          </div>
-          <button
-            onClick={() => window.open('/trade.html', '_blank')}
-            className="px-3 py-1 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors whitespace-nowrap"
-          >
-            Trade
-          </button>
-        </div>
+        <button
+          onClick={() => window.open('/trade.html', '_blank')}
+          className="px-3 py-1.5 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors whitespace-nowrap shrink-0"
+        >
+          Trade
+        </button>
+      </div>
+      <div className="flex gap-0.5 md:gap-1 mb-2">
+        {HORIZONS.map(h => (
+          <HorizonButton
+            key={h.id}
+            label={h.label}
+            isSelected={selectedHorizon === h.id}
+            onClick={() => onHorizonChange(h.id)}
+          />
+        ))}
       </div>
 
       {/* Chart area */}

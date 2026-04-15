@@ -48,11 +48,12 @@ export async function fetchFredData() {
           value,
           suffix: s.suffix,
           date: latest?.date || null,
+          prevDate: previous?.date || null,
           delta,
         }
       } catch (err) {
         console.error(`FRED ${s.id} failed:`, err.message)
-        return { id: s.id, label: s.label, category: s.category, value: null, suffix: s.suffix, date: null, delta: null }
+        return { id: s.id, label: s.label, category: s.category, value: null, suffix: s.suffix, date: null, prevDate: null, delta: null }
       }
     })
   )

@@ -331,11 +331,12 @@ app.get('/api/fred', async (req, res) => {
           return {
             id: s.id, label: s.label, category: s.category,
             value, suffix: s.suffix, date: latest?.date || null,
+            prevDate: previous?.date || null,
             delta: (value != null && prevValue != null) ? value - prevValue : null,
           }
         } catch (err) {
           console.error(`FRED ${s.id} failed:`, err.message)
-          return { id: s.id, label: s.label, category: s.category, value: null, suffix: s.suffix, date: null, delta: null }
+          return { id: s.id, label: s.label, category: s.category, value: null, suffix: s.suffix, date: null, prevDate: null, delta: null }
         }
       })
     )

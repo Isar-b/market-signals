@@ -1,9 +1,15 @@
 import { useFredData } from '../hooks/useFredData'
 
-function formatDate(dateStr) {
+function formatMonth(dateStr) {
   if (!dateStr) return ''
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+}
+
+function formatShortMonth(dateStr) {
+  if (!dateStr) return ''
+  const d = new Date(dateStr + 'T00:00:00')
+  return d.toLocaleDateString('en-US', { month: 'short' })
 }
 
 function formatValue(value, suffix) {
@@ -11,15 +17,15 @@ function formatValue(value, suffix) {
   return `${value.toFixed(1)}${suffix}`
 }
 
-function DeltaBadge({ delta }) {
-  if (delta == null) return null
-  const isUp = delta > 0
-  const color = isUp ? 'text-red' : 'text-green' // rising inflation/unemployment = red
-  return (
-    <span className={`text-[10px] font-medium ${color}`}>
-      {isUp ? '+' : ''}{delta.toFixed(1)}pp
-    </span>
-  )
+function buildDescription(ind) {
+  // e.g. "Mar 2026 YoY · vs Feb 2026"
+  const period = formatMonth(ind.date)
+  if (!period) return ''
+  const isYoY = ind.label.includes('YoY')
+  const periodType = isYoY ? 'YoY' : ''
+  const prevMonth = ind.prevDate ? formatShortMonth(ind.prevDate) : null
+  const vsText = prevMonth && ind.delta != null ? `vs ${prevMonth}` : ''
+  return [period, periodType, vsText].filter(Boolean).join(' · ')
 }
 
 export default function EconPanel({ enabled }) {
@@ -64,10 +70,14 @@ export default function EconPanel({ enabled }) {
               >
                 <div className="min-w-0">
                   <div className="text-xs text-text-primary font-medium">{ind.label}</div>
-                  <div className="text-[10px] text-text-secondary">{formatDate(ind.date)}</div>
+                  <div className="text-[10px] text-text-secondary">{buildDescription(ind)}</div>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
-                  <DeltaBadge delta={ind.delta} />
+                  {ind.delta != null && ind.prevDate && (
+                    <span className={`text-[10px] font-medium ${ind.delta > 0 ? 'text-red' : 'text-green'}`}>
+                      {ind.delta > 0 ? '+' : ''}{ind.delta.toFixed(1)}pp vs {formatShortMonth(ind.prevDate)}
+                    </span>
+                  )}
                   <span className="text-sm font-bold text-text-primary">
                     {formatValue(ind.value, ind.suffix)}
                   </span>

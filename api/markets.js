@@ -129,18 +129,62 @@ Return 20-30 keywords. Be exhaustive with product/brand names. Only return the J
   }
 }
 
-async function getNewsContext(assetLabel) {
-  const response = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
-    max_tokens: 300,
-    tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 1 }],
-    messages: [{
-      role: 'user',
-      content: `What are the top 5 news stories and themes moving ${assetLabel} this week? Reply as a brief bullet list, under 150 words.`
-    }],
+// ─── TheNewsAPI helpers ────────────────────────────────────────────────────
+const newsCache = new Map()
+const NEWS_CACHE_TTL = 15 * 60 * 1000
+
+const NEWS_SEARCH_OVERRIDES = {
+  SP500:    '"S&P 500" | "stock market" | "Wall Street"',
+  SP500_HL: '"S&P 500" | "stock market" | "Wall Street"',
+  NDX:      '"Nasdaq" | "tech stocks"',
+  OIL:      '"crude oil" | "Brent" | "OPEC" | "oil price"',
+  OIL_HL:   '"crude oil" | "Brent" | "OPEC" | "oil price"',
+  GOLD:     '"gold price" | "gold" | "precious metals"',
+  BTC:      '"Bitcoin" | "BTC" | "crypto"',
+  ETH:      '"Ethereum" | "ETH" | "DeFi"',
+}
+
+async function fetchNewsArticles(asset, label) {
+  const cacheKey = `news:${asset}`
+  const cached = newsCache.get(cacheKey)
+  if (cached && Date.now() - cached.ts < NEWS_CACHE_TTL) return cached.data
+
+  const apiKey = process.env.NEWS_API_KEY
+  if (!apiKey) return []
+
+  const search = NEWS_SEARCH_OVERRIDES[asset] || `"${label}"`
+  const after = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0]
+  const params = new URLSearchParams({
+    api_token: apiKey,
+    search,
+    language: 'en',
+    published_after: after,
+    sort: 'published_at',
+    limit: '5',
   })
-  const textBlock = response.content.find(b => b.type === 'text')
-  return textBlock?.text || ''
+
+  const resp = await fetch(`https://api.thenewsapi.com/v1/news/all?${params}`)
+  if (!resp.ok) throw new Error(`News API returned ${resp.status}`)
+  const json = await resp.json()
+
+  const articles = (json.data || []).map(a => ({
+    title: a.title,
+    url: a.url,
+    source: a.source,
+    snippet: a.snippet || a.description || '',
+    publishedAt: a.published_at,
+    imageUrl: a.image_url,
+  }))
+
+  newsCache.set(cacheKey, { data: articles, ts: Date.now() })
+  return articles
+}
+
+function formatNewsContext(articles) {
+  if (!articles || articles.length === 0) return ''
+  return articles
+    .map((a, i) => `${i + 1}. "${a.title}" (${a.source}, ${new Date(a.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })})`)
+    .join('\n')
 }
 
 async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, marketLimit = 5, newsContext = '') {
@@ -260,14 +304,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // 3b. For indices, get current news context via web search
+    // 3b. Get current news context via TheNewsAPI (all assets)
     let newsContext = ''
-    if (isIndex && anthropic) {
-      try {
-        newsContext = await getNewsContext(assetLabel)
-      } catch (err) {
-        console.error('News context failed:', err.message)
-      }
+    try {
+      const articles = await fetchNewsArticles(asset, assetLabel)
+      newsContext = formatNewsContext(articles)
+    } catch (err) {
+      console.error('News context failed:', err.message)
     }
 
     // 4. Pre-filter: exclude closed/resolved/expired + probability range

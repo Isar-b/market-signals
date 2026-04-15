@@ -1,13 +1,12 @@
 import { useState, useEffect } from 'react'
 import { useDynamicMarkets } from '../hooks/useDynamicMarkets'
-import { isIndexAsset, HL_TO_MARKET_ID } from '../config/assets'
+import { HL_TO_MARKET_ID } from '../config/assets'
 import MarketCard from '../components/MarketCard'
 
 export default function ProbabilityPanel({ asset, selectedHorizon }) {
   const [expandedIndex, setExpandedIndex] = useState(null)
-  const isIndex = isIndexAsset(asset?.id)
   const marketAssetId = HL_TO_MARKET_ID[asset?.id] || asset?.id
-  const { markets, loading, error, loadingMessage, progress } = useDynamicMarkets(marketAssetId, asset?.label, isIndex)
+  const { markets, loading, error, loadingMessage, progress } = useDynamicMarkets(marketAssetId, asset?.label)
 
   // Reset expanded card when asset changes
   useEffect(() => {
@@ -20,9 +19,6 @@ export default function ProbabilityPanel({ asset, selectedHorizon }) {
 
   return (
     <>
-      <h2 className="text-xs font-semibold uppercase tracking-wider text-text-secondary mb-4">
-        Prediction Markets
-      </h2>
       <div className="flex flex-col gap-2">
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-4">

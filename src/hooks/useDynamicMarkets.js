@@ -3,28 +3,20 @@ import { useState, useEffect, useRef } from 'react'
 const LOADING_STEPS = [
   'Scanning 10,000 prediction markets...',
   'Building asset profile...',
+  'Fetching trending news...',
   'Matching markets by sector & geography...',
   'Ranking by relevance...',
   'Selecting top signals...',
 ]
 
-const LOADING_STEPS_INDEX = [
-  'Scanning 10,000 prediction markets...',
-  'Building asset profile...',
-  'Searching the web for relevant news that moves markets...',
-  'Matching markets by sector & geography...',
-  'Ranking by relevance...',
-  'Selecting top signals...',
-]
-
-export function useDynamicMarkets(assetId, assetLabel, isIndex = false) {
+export function useDynamicMarkets(assetId, assetLabel) {
   const [markets, setMarkets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loadingStep, setLoadingStep] = useState(0)
   const stepTimerRef = useRef(null)
 
-  const steps = isIndex ? LOADING_STEPS_INDEX : LOADING_STEPS
+  const steps = LOADING_STEPS
 
   // Cycle through loading steps while loading
   useEffect(() => {

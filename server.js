@@ -292,6 +292,62 @@ app.get('/api/news', async (req, res) => {
   }
 })
 
+// ─── /api/fred (Federal Reserve Economic Data) ────────────────────────────
+const FRED_CACHE_TTL = 60 * 60 * 1000
+let fredCache = { data: null, ts: 0 }
+
+const FRED_SERIES = [
+  { id: 'GDPNOW',   label: 'GDPNow Estimate',   units: 'lin',  suffix: '%', category: 'Growth' },
+  { id: 'CPIAUCSL', label: 'CPI (Headline YoY)', units: 'pc1',  suffix: '%', category: 'Inflation' },
+  { id: 'CPILFESL', label: 'CPI (Core YoY)',     units: 'pc1',  suffix: '%', category: 'Inflation' },
+  { id: 'PCEPI',    label: 'PCE (Headline YoY)', units: 'pc1',  suffix: '%', category: 'Inflation' },
+  { id: 'PCEPILFE', label: 'PCE (Core YoY)',     units: 'pc1',  suffix: '%', category: 'Inflation' },
+  { id: 'UNRATE',   label: 'Unemployment Rate',  units: 'lin',  suffix: '%', category: 'Labor' },
+]
+
+app.get('/api/fred', async (req, res) => {
+  try {
+    if (fredCache.data && Date.now() - fredCache.ts < FRED_CACHE_TTL) {
+      return res.json({ indicators: fredCache.data })
+    }
+
+    const apiKey = process.env.FRED_API_KEY
+    if (!apiKey) return res.json({ indicators: [] })
+
+    const results = await Promise.all(
+      FRED_SERIES.map(async (s) => {
+        try {
+          const params = new URLSearchParams({
+            series_id: s.id, api_key: apiKey, file_type: 'json',
+            sort_order: 'desc', limit: '2', units: s.units,
+          })
+          const resp = await fetch(`https://api.stlouisfed.org/fred/series/observations?${params}`)
+          const json = await resp.json()
+          const obs = (json.observations || []).filter(o => o.value !== '.')
+          const latest = obs[0]
+          const previous = obs[1]
+          const value = latest ? parseFloat(latest.value) : null
+          const prevValue = previous ? parseFloat(previous.value) : null
+          return {
+            id: s.id, label: s.label, category: s.category,
+            value, suffix: s.suffix, date: latest?.date || null,
+            delta: (value != null && prevValue != null) ? value - prevValue : null,
+          }
+        } catch (err) {
+          console.error(`FRED ${s.id} failed:`, err.message)
+          return { id: s.id, label: s.label, category: s.category, value: null, suffix: s.suffix, date: null, delta: null }
+        }
+      })
+    )
+
+    fredCache = { data: results, ts: Date.now() }
+    res.json({ indicators: results })
+  } catch (err) {
+    console.error('FRED error:', err.message)
+    res.status(500).json({ error: err.message })
+  }
+})
+
 // ─── /api/markets (dynamic Polymarket discovery) ───────────────────────────
 app.get('/api/markets', async (req, res) => {
   try {

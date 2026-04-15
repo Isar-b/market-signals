@@ -197,26 +197,28 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, mark
 
   const prompt = `You are selecting prediction markets for a financial dashboard tracking: ${assetLabel}.
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}${newsContext ? `\nCURRENT NEWS (prioritise markets related to these themes):\n${newsContext}\n` : ''}
-STEP 1: Group the markets below by topic (e.g. "market cap ranking", "leadership", "product launch", "tariffs", "interest rates", etc.)
-STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct impact on ${assetLabel}).
+STEP 1: Group the markets below by topic. Be STRICT about grouping — these are ALL the same topic and you must pick only ONE:
+  - "Fed Chair confirmed" / "Fed Chair nomination" / "Fed Chair withdrawal" / "Jerome Powell out" → all ONE topic: "Fed leadership"
+  - "S&P hits X" / "S&P hits Y" / "SPY hits Z" → all ONE topic: "price targets"
+  - "Bitcoin hits 100k" / "BTC performance" → all ONE topic: "Bitcoin price"
+STEP 2: From each topic group, pick only the SINGLE most interesting market (highest volume or most direct relevance).
 STEP 3: Return up to ${marketLimit} markets, each from a DIFFERENT topic group.
 
 PRIORITY ORDER — pick from higher tiers first:
 1. Markets DIRECTLY about ${assetLabel} by name (earnings, leadership, lawsuits, products)
-2. Markets about ${assetLabel}'s specific SECTOR or INDUSTRY (e.g. fintech, EVs, semiconductors)
-3. Markets about ${assetLabel}'s key GEOGRAPHIC markets (e.g. Brazil, China, EU)
+2. Markets about ${assetLabel}'s specific SECTOR or INDUSTRY
+3. Markets about ${assetLabel}'s key GEOGRAPHIC markets
 4. Markets about direct competitors or partners by name
-5. Macro/policy events ONLY if they specifically impact ${assetLabel}'s sector or geography
+5. Macro/policy events ONLY if they have a SPECIFIC, DIRECT impact on ${assetLabel}
 
 HARD RULES:
-- DIVERSITY IS MANDATORY: never return 2+ markets on the same topic, even if they differ by date or threshold
-- Every market must have a clear, specific causal link to ${assetLabel}'s price — you must be able to explain HOW it moves the stock
-- REJECT markets about unrelated sectors (e.g. Bitcoin/crypto markets for a non-crypto stock, oil markets for a tech company)
-- REJECT generic macro (Fed Chair, GDP, recession) unless ${assetLabel} is a broad market index
-- MAX 2 markets about price targets, price action, or market cap ranking — prioritise non-price markets (products, leadership, regulation, competitors, sector events)
-- REJECT markets about unrelated countries, leaders, or geopolitical events unless they DIRECTLY name ${assetLabel} or its specific industry
-- IPO markets: only include if the company is a major constituent of ${assetLabel} or large enough to significantly move the index (e.g. SpaceX). Skip small/niche company IPOs.
-- If fewer than ${marketLimit} topics are genuinely relevant, return fewer. Return an EMPTY array [] if nothing is relevant. NEVER select irrelevant markets just to fill the list — an empty result is better than wrong results.
+- DEDUP STRICTLY: if two markets are about the same person, same event, or same theme with different dates/thresholds/framing, they are DUPLICATES — pick only one
+- Every market must have a clear, specific causal link to ${assetLabel}'s price — ask yourself "how SPECIFICALLY does this move ${assetLabel}?" If you can't answer in one sentence, reject it
+- REJECT markets about unrelated asset classes (e.g. crypto markets for a stock index, oil for a tech company, stock markets for a crypto asset) unless the market explicitly names ${assetLabel}
+- REJECT generic macro (Fed Chair, GDP, recession, inflation) unless ${assetLabel} IS a broad market index — even then, max 1 generic macro market
+- MAX 2 markets about price targets or market cap — prioritise non-price markets
+- REJECT markets about unrelated countries or leaders unless they DIRECTLY name ${assetLabel}'s sector
+- Return an EMPTY array [] if nothing is relevant — never pad with weak matches
 
 Markets:
 ${candidateList}

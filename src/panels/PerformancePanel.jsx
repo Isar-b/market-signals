@@ -28,15 +28,23 @@ export default function PerformancePanel({ asset, selectedHorizon, onHorizonChan
             </>
           )}
         </div>
-        <div className="flex gap-0.5 md:gap-1">
-          {HORIZONS.map(h => (
-            <HorizonButton
-              key={h.id}
-              label={h.label}
-              isSelected={selectedHorizon === h.id}
-              onClick={() => onHorizonChange(h.id)}
-            />
-          ))}
+        <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex gap-0.5 md:gap-1">
+            {HORIZONS.map(h => (
+              <HorizonButton
+                key={h.id}
+                label={h.label}
+                isSelected={selectedHorizon === h.id}
+                onClick={() => onHorizonChange(h.id)}
+              />
+            ))}
+          </div>
+          <button
+            onClick={() => window.open('/trade.html', '_blank')}
+            className="px-3 py-1 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors whitespace-nowrap"
+          >
+            Trade
+          </button>
         </div>
       </div>
 

@@ -1,16 +1,24 @@
-export default function AssetButton({ label, isSelected, onClick, onRemove, canRemove, onMoveUp, onMoveDown }) {
+export default function AssetButton({ label, source, isSelected, onClick, onRemove, canRemove, onMoveUp, onMoveDown }) {
+  const isHL = source === 'hyperliquid'
   return (
     <div className="relative group flex items-center">
       <button
         onClick={onClick}
         className={`w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium transition-colors
           ${isSelected
-            ? 'bg-accent text-white'
+            ? isHL ? 'bg-hl-accent text-white' : 'bg-accent text-white'
             : 'text-text-secondary hover:bg-bg-card hover:text-text-primary'
           }`}
       >
         <div className="flex items-center justify-between">
-          <span className="truncate pr-2">{label}</span>
+          <span className="truncate pr-2 flex items-center gap-1.5">
+            {label}
+            {isHL && (
+              <span className={`text-[9px] font-bold px-1 py-0.5 rounded leading-none ${isSelected ? 'bg-white/20' : 'bg-hl-accent/20 text-hl-accent'}`}>
+                HL
+              </span>
+            )}
+          </span>
           <div className="flex items-center gap-1 shrink-0 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
             <button
               onClick={(e) => { e.stopPropagation(); onMoveUp?.() }}

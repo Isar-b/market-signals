@@ -1,18 +1,23 @@
 import { useState, useEffect } from 'react'
 
-export function usePriceData(symbol, horizon) {
+export function usePriceData(asset, horizon) {
   const [data, setData] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!symbol) return
+    if (!asset) return
 
     let cancelled = false
     setLoading(true)
     setError(null)
 
-    fetch(`/api/chart?symbol=${encodeURIComponent(symbol)}&horizon=${encodeURIComponent(horizon)}`)
+    const source = asset.source || 'yahoo'
+    const url = source === 'hyperliquid'
+      ? `/api/chart?source=hl&coin=${encodeURIComponent(asset.hlSymbol)}&horizon=${encodeURIComponent(horizon)}`
+      : `/api/chart?symbol=${encodeURIComponent(asset.yahooSymbol)}&horizon=${encodeURIComponent(horizon)}`
+
+    fetch(url)
       .then(res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`)
         return res.json()
@@ -31,7 +36,7 @@ export function usePriceData(symbol, horizon) {
       })
 
     return () => { cancelled = true }
-  }, [symbol, horizon])
+  }, [asset?.id, horizon])
 
   return { data, loading, error }
 }

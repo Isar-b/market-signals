@@ -13,11 +13,16 @@ const ASSET_PATTERNS = {
   NDX:   [/nasdaq/i, /tech stock/i, /tech sector/i],
   OIL:   [/\boil\b/i, /crude/i, /brent/i, /opec/i, /hormuz/i, /\biran\b/i, /energy price/i, /petroleum/i],
   GOLD:  [/\bgold\b(?! ?en)/i, /precious metal/i, /bullion/i],
+  BTC:   [/\bbitcoin\b/i, /\bbtc\b/i, /\bcrypto\b/i, /\bhalving\b/i, /\bsatoshi\b/i, /\bblockchain\b/i],
+  ETH:   [/\bethereum\b/i, /\beth\b(?!anol)/i, /\bdefi\b/i, /\bvitalik\b/i, /\bstaking\b/i, /\blayer.?2\b/i],
   TSLA:  [/tesla/i, /\btsla\b/i, /\bmusk\b/i, /spacex/i, /\bxai\b/i, /electric vehicle/i],
   NVDA:  [/nvidia/i, /\bnvda\b/i, /semiconductor/i, /\bgpu\b/i],
   MSFT:  [/microsoft/i, /\bmsft\b/i, /openai/i, /\bazure\b/i],
   AAPL:  [/\bapple\b(?! ?bee)/i, /\baapl\b/i, /iphone/i, /app store/i],
 }
+// HL aliases reuse the same patterns as their Yahoo counterparts
+ASSET_PATTERNS.SP500_HL = ASSET_PATTERNS.SP500
+ASSET_PATTERNS.OIL_HL = ASSET_PATTERNS.OIL
 
 const MACRO_PATTERNS = [
   /\bfed\b(?!ex| ?cup)/i, /interest rate/i, /rate cut/i, /rate hike/i,
@@ -27,9 +32,13 @@ const MACRO_PATTERNS = [
 
 const ASSET_LABELS = {
   SP500: 'S&P 500 index',
+  SP500_HL: 'S&P 500 index',
   NDX: 'Nasdaq 100 index',
   OIL: 'Brent crude oil',
+  OIL_HL: 'Brent crude oil',
   GOLD: 'Gold',
+  BTC: 'Bitcoin cryptocurrency',
+  ETH: 'Ethereum cryptocurrency',
   TSLA: 'Tesla stock',
   NVDA: 'Nvidia stock',
   MSFT: 'Microsoft stock',
@@ -237,7 +246,7 @@ export default async function handler(req, res) {
     // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
     const INDEX_RE = /\b(s&p|index|composite|dow jones|nasdaq|ftse|russell|nikkei|hang seng|stoxx|dax\b|cac\b|vix|cboe|nyse|kospi|sensex|ibovespa|tsx)\b/i
-    const isIndex = ['SP500', 'NDX', 'OIL', 'GOLD'].includes(asset) || INDEX_RE.test(assetLabel)
+    const isIndex = ['SP500', 'SP500_HL', 'NDX', 'OIL', 'OIL_HL', 'GOLD', 'BTC', 'ETH'].includes(asset) || INDEX_RE.test(assetLabel)
     const marketLimit = isIndex ? 10 : 5
     let assetProfile = null
     let profileKeywords = []

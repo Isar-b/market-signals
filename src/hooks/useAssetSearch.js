@@ -1,5 +1,12 @@
 import { useState, useEffect, useRef } from 'react'
 
+const HL_ASSETS = [
+  { symbol: 'SP500_HL', shortname: 'S&P 500 24h', quoteType: 'PERP', source: 'hyperliquid', hlSymbol: 'xyz:SP500' },
+  { symbol: 'OIL_HL',   shortname: 'Brent Oil 24h', quoteType: 'PERP', source: 'hyperliquid', hlSymbol: 'xyz:BRENTOIL' },
+  { symbol: 'BTC',      shortname: 'Bitcoin',      quoteType: 'PERP', source: 'hyperliquid', hlSymbol: 'BTC' },
+  { symbol: 'ETH',      shortname: 'Ethereum',     quoteType: 'PERP', source: 'hyperliquid', hlSymbol: 'ETH' },
+]
+
 export function useAssetSearch() {
   const [query, setQuery] = useState('')
   const [results, setResults] = useState([])
@@ -12,6 +19,13 @@ export function useAssetSearch() {
       setLoading(false)
       return
     }
+
+    // Match Hyperliquid assets client-side
+    const q = query.toLowerCase()
+    const hlMatches = HL_ASSETS.filter(a =>
+      a.symbol.toLowerCase().includes(q) ||
+      a.shortname.toLowerCase().includes(q)
+    )
 
     setLoading(true)
 
@@ -27,13 +41,13 @@ export function useAssetSearch() {
         })
         .then(json => {
           if (!cancelled) {
-            setResults(json.results || [])
+            setResults([...hlMatches, ...(json.results || [])])
             setLoading(false)
           }
         })
         .catch(() => {
           if (!cancelled) {
-            setResults([])
+            setResults(hlMatches)
             setLoading(false)
           }
         })

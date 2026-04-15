@@ -8,12 +8,23 @@ const LOADING_STEPS = [
   'Selecting top signals...',
 ]
 
-export function useDynamicMarkets(assetId, assetLabel) {
+const LOADING_STEPS_INDEX = [
+  'Scanning 10,000 prediction markets...',
+  'Building asset profile...',
+  'Searching the web for relevant news that moves markets...',
+  'Matching markets by sector & geography...',
+  'Ranking by relevance...',
+  'Selecting top signals...',
+]
+
+export function useDynamicMarkets(assetId, assetLabel, isIndex = false) {
   const [markets, setMarkets] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [loadingStep, setLoadingStep] = useState(0)
   const stepTimerRef = useRef(null)
+
+  const steps = isIndex ? LOADING_STEPS_INDEX : LOADING_STEPS
 
   // Cycle through loading steps while loading
   useEffect(() => {
@@ -26,12 +37,12 @@ export function useDynamicMarkets(assetId, assetLabel) {
     setLoadingStep(0)
     let step = 0
     stepTimerRef.current = setInterval(() => {
-      step = Math.min(step + 1, LOADING_STEPS.length - 1)
+      step = Math.min(step + 1, steps.length - 1)
       setLoadingStep(step)
     }, 2000)
 
     return () => clearInterval(stepTimerRef.current)
-  }, [loading])
+  }, [loading, steps.length])
 
   useEffect(() => {
     if (!assetId) return
@@ -64,10 +75,13 @@ export function useDynamicMarkets(assetId, assetLabel) {
     return () => { cancelled = true }
   }, [assetId, assetLabel])
 
+  const progress = loading ? Math.round(((loadingStep + 1) / steps.length) * 100) : 100
+
   return {
     markets,
     loading,
     error,
-    loadingMessage: LOADING_STEPS[loadingStep],
+    loadingMessage: steps[loadingStep],
+    progress,
   }
 }

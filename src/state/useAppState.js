@@ -10,8 +10,8 @@ function loadAssets() {
     if (stored) {
       const parsed = JSON.parse(stored)
       if (Array.isArray(parsed) && parsed.length > 0 &&
-          parsed.every(a => a.id && a.label && a.yahooSymbol)) {
-        return parsed
+          parsed.every(a => a.id && a.label && (a.yahooSymbol || a.hlSymbol))) {
+        return parsed.map(a => ({ ...a, source: a.source || 'yahoo' }))
       }
     }
   } catch { /* ignore corrupt data */ }
@@ -88,9 +88,13 @@ export function useAppState(user) {
 
   const addAsset = useCallback((asset) => {
     setAssets(prev => {
-      const exists = prev.some(a => a.id === asset.id || a.yahooSymbol === asset.yahooSymbol)
+      const exists = prev.some(a => a.id === asset.id ||
+        (asset.yahooSymbol && a.yahooSymbol === asset.yahooSymbol) ||
+        (asset.hlSymbol && a.hlSymbol === asset.hlSymbol))
       if (exists) {
-        const existing = prev.find(a => a.id === asset.id || a.yahooSymbol === asset.yahooSymbol)
+        const existing = prev.find(a => a.id === asset.id ||
+          (asset.yahooSymbol && a.yahooSymbol === asset.yahooSymbol) ||
+          (asset.hlSymbol && a.hlSymbol === asset.hlSymbol))
         setSelectedAsset(existing.id)
         return prev
       }

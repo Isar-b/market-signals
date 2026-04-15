@@ -24,11 +24,15 @@ const ASSET_PATTERNS = {
   NDX:   [/nasdaq/i, /tech stock/i, /tech sector/i],
   OIL:   [/\boil\b/i, /crude/i, /brent/i, /opec/i, /hormuz/i, /\biran\b/i, /energy price/i, /petroleum/i],
   GOLD:  [/\bgold\b(?! ?en)/i, /precious metal/i, /bullion/i],
+  BTC:   [/\bbitcoin\b/i, /\bbtc\b/i, /\bcrypto\b/i, /\bhalving\b/i, /\bsatoshi\b/i, /\bblockchain\b/i],
+  ETH:   [/\bethereum\b/i, /\beth\b(?!anol)/i, /\bdefi\b/i, /\bvitalik\b/i, /\bstaking\b/i, /\blayer.?2\b/i],
   TSLA:  [/tesla/i, /\btsla\b/i, /\bmusk\b/i, /spacex/i, /\bxai\b/i, /electric vehicle/i],
   NVDA:  [/nvidia/i, /\bnvda\b/i, /semiconductor/i, /\bgpu\b/i],
   MSFT:  [/microsoft/i, /\bmsft\b/i, /openai/i, /\bazure\b/i],
   AAPL:  [/\bapple\b(?! ?bee)/i, /\baapl\b/i, /iphone/i, /app store/i],
 }
+ASSET_PATTERNS.SP500_HL = ASSET_PATTERNS.SP500
+ASSET_PATTERNS.OIL_HL = ASSET_PATTERNS.OIL
 
 const MACRO_PATTERNS = [
   /\bfed\b(?!ex| ?cup)/i, /interest rate/i, /rate cut/i, /rate hike/i,
@@ -38,19 +42,65 @@ const MACRO_PATTERNS = [
 
 const ASSET_LABELS = {
   SP500: 'S&P 500 index',
+  SP500_HL: 'S&P 500 index',
   NDX: 'Nasdaq 100 index',
   OIL: 'Brent crude oil',
+  OIL_HL: 'Brent crude oil',
   GOLD: 'Gold',
+  BTC: 'Bitcoin cryptocurrency',
+  ETH: 'Ethereum cryptocurrency',
   TSLA: 'Tesla stock',
   NVDA: 'Nvidia stock',
   MSFT: 'Microsoft stock',
   AAPL: 'Apple stock',
 }
 
-// ─── /api/chart (yahoo-finance2 proxy) ─────────────────────────────────────
+// ─── Hyperliquid helpers ───────────────────────────────────────────────────
+const HL_VALID_COINS = new Set(['BTC', 'ETH', 'xyz:SP500', 'xyz:BRENTOIL'])
+
+function buildHLParams(horizon) {
+  const now = Date.now()
+  const DAY = 86400000
+  switch (horizon) {
+    case '1D':  return { interval: '5m',  startTime: now - DAY,       endTime: now }
+    case '1W':  return { interval: '1h',  startTime: now - 7 * DAY,   endTime: now }
+    case '1M':  return { interval: '1d',  startTime: now - 30 * DAY,  endTime: now }
+    case 'YTD': return { interval: '1d',  startTime: new Date(new Date().getFullYear(), 0, 1).getTime(), endTime: now }
+    case '1Y':  return { interval: '1d',  startTime: now - 365 * DAY, endTime: now }
+    case 'MAX': return { interval: '1w',  startTime: now - 3650 * DAY, endTime: now }
+    default:    return { interval: '1d',  startTime: new Date(new Date().getFullYear(), 0, 1).getTime(), endTime: now }
+  }
+}
+
+async function fetchHyperliquid(coin, horizon) {
+  const params = buildHLParams(horizon)
+  const resp = await fetch('https://api.hyperliquid.xyz/info', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'candleSnapshot',
+      req: { coin, interval: params.interval, startTime: params.startTime, endTime: params.endTime },
+    }),
+  })
+  if (!resp.ok) throw new Error(`Hyperliquid API returned ${resp.status}`)
+  const candles = await resp.json()
+  return candles
+    .filter(c => c.c != null)
+    .map(c => ({ date: new Date(c.t).toISOString(), close: parseFloat(c.c) }))
+}
+
+// ─── /api/chart (yahoo-finance2 + Hyperliquid proxy) ──────────────────────
 app.get('/api/chart', async (req, res) => {
   try {
-    const { symbol, horizon } = req.query
+    const { symbol, horizon, source, coin } = req.query
+
+    if (source === 'hl') {
+      if (!coin || !horizon) return res.status(400).json({ error: 'coin and horizon required' })
+      if (!HL_VALID_COINS.has(coin)) return res.status(400).json({ error: 'Invalid coin' })
+      const data = await fetchHyperliquid(coin, horizon)
+      return res.json({ data })
+    }
+
     if (!symbol || !horizon) {
       return res.status(400).json({ error: 'symbol and horizon required' })
     }
@@ -179,7 +229,7 @@ app.get('/api/markets', async (req, res) => {
     // 3. Get asset profile + search keywords from LLM
     const assetLabel = label || ASSET_LABELS[asset] || asset
     const INDEX_RE = /\b(s&p|index|composite|dow jones|nasdaq|ftse|russell|nikkei|hang seng|stoxx|dax\b|cac\b|vix|cboe|nyse|kospi|sensex|ibovespa|tsx)\b/i
-    const isIndex = ['SP500', 'NDX', 'OIL', 'GOLD'].includes(asset) || INDEX_RE.test(assetLabel)
+    const isIndex = ['SP500', 'SP500_HL', 'NDX', 'OIL', 'OIL_HL', 'GOLD', 'BTC', 'ETH'].includes(asset) || INDEX_RE.test(assetLabel)
     const marketLimit = isIndex ? 10 : 5
     let assetProfile = null
     let profileKeywords = []

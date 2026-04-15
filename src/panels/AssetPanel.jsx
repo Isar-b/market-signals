@@ -4,7 +4,10 @@ import AssetSearch from '../components/AssetSearch'
 import AuthButton from '../components/AuthButton'
 
 export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onRemove, onMove, auth }) {
-  const existingIds = useMemo(() => new Set(assets.map(a => a.yahooSymbol)), [assets])
+  const existingIds = useMemo(() => new Set([
+    ...assets.map(a => a.yahooSymbol).filter(Boolean),
+    ...assets.map(a => a.hlSymbol).filter(Boolean),
+  ]), [assets])
 
   return (
     <>
@@ -17,6 +20,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           <AssetButton
             key={asset.id}
             label={asset.label}
+            source={asset.source}
             isSelected={selectedAsset === asset.id}
             onClick={() => onSelect(asset.id)}
             onRemove={() => onRemove(asset.id)}
@@ -39,7 +43,7 @@ export default function AssetPanel({ assets, selectedAsset, onSelect, onAdd, onR
           <div className="text-[10px] text-text-secondary leading-tight">
             Created by Isar
             <br />
-            Powered by Yahoo Finance &amp; Polymarket
+            Powered by Yahoo Finance, Hyperliquid &amp; Polymarket
           </div>
         </div>
       )}

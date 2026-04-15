@@ -19,12 +19,12 @@ export default function AssetSearch({ onAdd, existingIds }) {
   }, [clear])
 
   const handleSelect = (result) => {
-    if (existingIds.has(result.symbol)) return
-    onAdd({
-      id: result.symbol,
-      label: result.shortname || result.symbol,
-      yahooSymbol: result.symbol,
-    })
+    if (existingIds.has(result.symbol) || existingIds.has(result.hlSymbol)) return
+    if (result.source === 'hyperliquid') {
+      onAdd({ id: result.symbol, label: result.shortname, hlSymbol: result.hlSymbol, source: 'hyperliquid' })
+    } else {
+      onAdd({ id: result.symbol, label: result.shortname || result.symbol, yahooSymbol: result.symbol })
+    }
     clear()
   }
 
@@ -60,7 +60,7 @@ export default function AssetSearch({ onAdd, existingIds }) {
             </div>
           )}
           {results.map(result => {
-            const isAdded = existingIds.has(result.symbol)
+            const isAdded = existingIds.has(result.symbol) || existingIds.has(result.hlSymbol)
             return (
               <button
                 key={result.symbol}

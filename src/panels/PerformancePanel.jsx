@@ -5,7 +5,7 @@ import PriceChart from '../components/PriceChart'
 import ChartErrorBoundary from '../components/ChartErrorBoundary'
 
 export default function PerformancePanel({ asset, selectedHorizon, onHorizonChange }) {
-  const { data, loading, error } = usePriceData(asset?.yahooSymbol, selectedHorizon)
+  const { data, loading, error } = usePriceData(asset, selectedHorizon)
 
   const currentPrice = data.length > 0 ? data[data.length - 1].close : null
   const firstPrice = data.length > 0 ? data[0].close : null

@@ -48,8 +48,8 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: 'Invalid assets array (1-50 items)' })
       }
       for (const a of assets) {
-        if (!a.id || !a.label || !a.yahooSymbol) {
-          return res.status(400).json({ error: 'Each asset must have id, label, yahooSymbol' })
+        if (!a.id || !a.label || (!a.yahooSymbol && !a.hlSymbol)) {
+          return res.status(400).json({ error: 'Each asset must have id, label, and yahooSymbol or hlSymbol' })
         }
       }
 

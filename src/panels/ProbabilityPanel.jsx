@@ -1,10 +1,13 @@
 import { useState, useEffect } from 'react'
 import { useDynamicMarkets } from '../hooks/useDynamicMarkets'
+import { isIndexAsset, HL_TO_MARKET_ID } from '../config/assets'
 import MarketCard from '../components/MarketCard'
 
 export default function ProbabilityPanel({ asset, selectedHorizon }) {
   const [expandedIndex, setExpandedIndex] = useState(null)
-  const { markets, loading, error, loadingMessage } = useDynamicMarkets(asset?.id, asset?.label)
+  const isIndex = isIndexAsset(asset?.id)
+  const marketAssetId = HL_TO_MARKET_ID[asset?.id] || asset?.id
+  const { markets, loading, error, loadingMessage, progress } = useDynamicMarkets(marketAssetId, asset?.label, isIndex)
 
   // Reset expanded card when asset changes
   useEffect(() => {
@@ -23,10 +26,12 @@ export default function ProbabilityPanel({ asset, selectedHorizon }) {
       <div className="flex flex-col gap-2">
         {loading && (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
-            {/* Spinning loader */}
-            <div className="relative w-10 h-10">
-              <div className="absolute inset-0 rounded-full border-2 border-border" />
-              <div className="absolute inset-0 rounded-full border-2 border-accent border-t-transparent animate-spin" />
+            {/* Progress bar */}
+            <div className="w-full max-w-xs bg-bg-primary rounded-full h-1.5 overflow-hidden">
+              <div
+                className="h-full bg-accent rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${progress}%` }}
+              />
             </div>
             {/* Step message with fade transition */}
             <p className="text-sm text-text-secondary text-center animate-pulse transition-all duration-500">

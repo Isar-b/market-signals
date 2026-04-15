@@ -106,7 +106,7 @@ export default function App() {
 
         {/* Pinned footer */}
         <div className="px-3 py-2 text-center text-[10px] text-text-secondary leading-tight border-t border-border bg-bg-panel shrink-0">
-          Created by Isar &middot; Powered by Yahoo Finance &amp; Polymarket
+          Created by Isar &middot; Powered by Yahoo Finance, Hyperliquid &amp; Polymarket
         </div>
       </div>
     </>

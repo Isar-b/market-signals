@@ -2,6 +2,8 @@ import YahooFinance from 'yahoo-finance2'
 
 const yf = new YahooFinance()
 
+const HL_VALID_COINS = new Set(['BTC', 'ETH', 'xyz:SP500', 'xyz:BRENTOIL'])
+
 function buildChartParams(horizon) {
   const now = Date.now()
   const DAY = 86400000
@@ -16,9 +18,48 @@ function buildChartParams(horizon) {
   }
 }
 
+function buildHLParams(horizon) {
+  const now = Date.now()
+  const DAY = 86400000
+  switch (horizon) {
+    case '1D':  return { interval: '5m',  startTime: now - DAY,       endTime: now }
+    case '1W':  return { interval: '1h',  startTime: now - 7 * DAY,   endTime: now }
+    case '1M':  return { interval: '1d',  startTime: now - 30 * DAY,  endTime: now }
+    case 'YTD': return { interval: '1d',  startTime: new Date(new Date().getFullYear(), 0, 1).getTime(), endTime: now }
+    case '1Y':  return { interval: '1d',  startTime: now - 365 * DAY, endTime: now }
+    case 'MAX': return { interval: '1w',  startTime: now - 3650 * DAY, endTime: now }
+    default:    return { interval: '1d',  startTime: new Date(new Date().getFullYear(), 0, 1).getTime(), endTime: now }
+  }
+}
+
+async function fetchHyperliquid(coin, horizon) {
+  const params = buildHLParams(horizon)
+  const resp = await fetch('https://api.hyperliquid.xyz/info', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      type: 'candleSnapshot',
+      req: { coin, interval: params.interval, startTime: params.startTime, endTime: params.endTime },
+    }),
+  })
+  if (!resp.ok) throw new Error(`Hyperliquid API returned ${resp.status}`)
+  const candles = await resp.json()
+  return candles
+    .filter(c => c.c != null)
+    .map(c => ({ date: new Date(c.t).toISOString(), close: parseFloat(c.c) }))
+}
+
 export default async function handler(req, res) {
   try {
-    const { symbol, horizon } = req.query
+    const { symbol, horizon, source, coin } = req.query
+
+    if (source === 'hl') {
+      if (!coin || !horizon) return res.status(400).json({ error: 'coin and horizon required' })
+      if (!HL_VALID_COINS.has(coin)) return res.status(400).json({ error: 'Invalid coin' })
+      const data = await fetchHyperliquid(coin, horizon)
+      return res.json({ data })
+    }
+
     if (!symbol || !horizon) {
       return res.status(400).json({ error: 'symbol and horizon required' })
     }

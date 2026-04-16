@@ -30,6 +30,7 @@ export default async function handler(req, res) {
         ? profile.longBusinessSummary.substring(0, 300) + (profile.longBusinessSummary.length > 300 ? '...' : '')
         : null,
       employees: profile.fullTimeEmployees || null,
+      website: profile.website || null,
 
       // Valuation
       forwardPE: stats.forwardPE || null,

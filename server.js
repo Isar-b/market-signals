@@ -378,6 +378,7 @@ app.get('/api/stock-summary', async (req, res) => {
         ? profile.longBusinessSummary.substring(0, 300) + (profile.longBusinessSummary.length > 300 ? '...' : '')
         : null,
       employees: profile.fullTimeEmployees || null,
+      website: profile.website || null,
       forwardPE: stats.forwardPE || null,
       trailingPE: (fin.currentPrice && stats.trailingEps) ? +(fin.currentPrice / stats.trailingEps).toFixed(1) : null,
       priceToBook: stats.priceToBook ? +stats.priceToBook.toFixed(1) : null,

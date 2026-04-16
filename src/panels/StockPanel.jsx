@@ -86,6 +86,16 @@ export default function StockPanel({ asset, enabled }) {
               {data.summary}
             </div>
           )}
+          {data.website && (
+            <a
+              href={data.website}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 px-3 py-2 text-[11px] text-accent hover:text-accent-hover transition-colors border-t border-border"
+            >
+              Company Website &rarr;
+            </a>
+          )}
         </Section>
       )}
 

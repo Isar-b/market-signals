@@ -29,7 +29,14 @@ export default function PerformancePanel({ asset, selectedHorizon, onHorizonChan
           )}
         </div>
         <button
-          onClick={() => window.open('/trade.html', '_blank')}
+          onClick={() => {
+            fetch('/api/trade-click', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ asset: asset?.id, label: asset?.label }),
+            }).catch(() => {})
+            window.open('/trade.html', '_blank')
+          }}
           className="px-3 py-1.5 text-xs font-semibold bg-accent text-white rounded-lg hover:bg-accent-hover transition-colors whitespace-nowrap shrink-0"
         >
           Trade

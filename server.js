@@ -410,6 +410,15 @@ app.get('/api/stock-summary', async (req, res) => {
   }
 })
 
+// ─── /api/trade-click (analytics) ──────────────────────────────────────────
+app.use(express.json())
+app.post('/api/trade-click', (req, res) => {
+  const { asset, label } = req.body || {}
+  const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown'
+  console.log(`[Trade Click] asset=${asset} label=${label} ip=${ip} time=${new Date().toISOString()}`)
+  res.json({ ok: true })
+})
+
 // ─── /api/markets (dynamic Polymarket discovery) ───────────────────────────
 app.get('/api/markets', async (req, res) => {
   try {

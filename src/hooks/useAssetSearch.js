@@ -30,10 +30,9 @@ export function useAssetSearch() {
     setLoading(true)
 
     // Debounce 300ms
+    let cancelled = false
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(() => {
-      let cancelled = false
-
       fetch(`/api/search?q=${encodeURIComponent(query)}`)
         .then(res => {
           if (!res.ok) throw new Error(`HTTP ${res.status}`)
@@ -51,11 +50,12 @@ export function useAssetSearch() {
             setLoading(false)
           }
         })
-
-      return () => { cancelled = true }
     }, 300)
 
-    return () => clearTimeout(timerRef.current)
+    return () => {
+      cancelled = true
+      clearTimeout(timerRef.current)
+    }
   }, [query])
 
   const clear = () => {

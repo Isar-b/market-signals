@@ -1,4 +1,6 @@
-const CACHE_TTL = 60 * 60 * 1000 // 1 hour — FRED data updates monthly at most
+import { CACHE_TTL_FRED } from '../lib/constants.js'
+
+const CACHE_TTL = CACHE_TTL_FRED
 let fredCache = { data: null, ts: 0 }
 
 const SERIES = [
@@ -62,7 +64,7 @@ export async function fetchFredData() {
   return results
 }
 
-export default async function handler(req, res) {
+export default async function handler(_req, res) {
   try {
     const data = await fetchFredData()
     res.json({ indicators: data })

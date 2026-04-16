@@ -1,5 +1,4 @@
 import { useNews } from '../hooks/useNews'
-import { HL_TO_MARKET_ID } from '../config/assets'
 import NewsCard from '../components/NewsCard'
 
 export default function NewsPanel({ asset }) {

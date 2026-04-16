@@ -62,12 +62,12 @@ export function useAppState(user) {
       .then(res => res.json())
       .then(data => {
         if (data.assets && Array.isArray(data.assets) && data.assets.length > 0) {
-          // KV has data — use it
+          // KV has data — use it (overrides localStorage cache)
           setAssets(data.assets)
           if (data.selected) setSelectedAsset(data.selected)
         } else {
-          // First login — migrate localStorage to KV
-          syncToServer(assets, selectedAsset)
+          // First login — migrate localStorage to KV using the cached values
+          syncToServer(cached, cachedSelected)
         }
       })
       .catch(() => { /* KV unavailable, stay with localStorage */ })

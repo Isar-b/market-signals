@@ -18,6 +18,7 @@ export default function App() {
   } = useAppState(auth.user)
   const [showAssets, setShowAssets] = useState(false)
   const [desktopTab, setDesktopTab] = useState('markets')
+  const [visitedTabs, setVisitedTabs] = useState({ markets: true })
   const [mobileMarketsOpen, setMobileMarketsOpen] = useState(true)
   const [mobileNewsOpen, setMobileNewsOpen] = useState(true)
   const [mobileEconOpen, setMobileEconOpen] = useState(true)
@@ -58,7 +59,7 @@ export default function App() {
             {['markets', 'news', ...(isIndex ? ['economy'] : []), ...(isStock ? ['stock'] : [])].map(tab => (
               <button
                 key={tab}
-                onClick={() => setDesktopTab(tab)}
+                onClick={() => { setDesktopTab(tab); setVisitedTabs(prev => ({ ...prev, [tab]: true })) }}
                 className={`flex-1 px-4 py-2.5 text-xs font-semibold uppercase tracking-wider transition-colors
                   ${desktopTab === tab
                     ? 'text-accent border-b-2 border-accent'
@@ -69,19 +70,25 @@ export default function App() {
               </button>
             ))}
           </div>
-          {/* Tab content — all rendered, inactive hidden to preserve state */}
+          {/* Tab content — lazy-rendered on first visit, then hidden to preserve state */}
           <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'markets' ? 'hidden' : ''}`}>
             <ProbabilityPanel asset={asset} selectedHorizon={selectedHorizon} />
           </div>
-          <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'news' ? 'hidden' : ''}`}>
-            <NewsPanel asset={asset} />
-          </div>
-          <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'economy' ? 'hidden' : ''}`}>
-            <EconPanel enabled={isIndex} />
-          </div>
-          <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'stock' ? 'hidden' : ''}`}>
-            <StockPanel asset={asset} enabled={isStock} />
-          </div>
+          {visitedTabs.news && (
+            <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'news' ? 'hidden' : ''}`}>
+              <NewsPanel asset={asset} />
+            </div>
+          )}
+          {visitedTabs.economy && (
+            <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'economy' ? 'hidden' : ''}`}>
+              <EconPanel enabled={isIndex} />
+            </div>
+          )}
+          {visitedTabs.stock && (
+            <div className={`flex-1 overflow-y-auto p-4 ${desktopTab !== 'stock' ? 'hidden' : ''}`}>
+              <StockPanel asset={asset} enabled={isStock} />
+            </div>
+          )}
         </div>
       </div>
 

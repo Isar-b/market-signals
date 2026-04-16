@@ -1,6 +1,7 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CACHE_TTL_NEWS } from '../lib/constants.js'
 
-const CACHE_TTL = 15 * 60 * 1000 // 15 minutes
+const CACHE_TTL = CACHE_TTL_NEWS
 const newsCache = new Map()
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 

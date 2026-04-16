@@ -1,7 +1,9 @@
 import YahooFinance from 'yahoo-finance2'
 
 const yf = new YahooFinance({ suppressNotices: ['yahooSurvey'] })
-const CACHE_TTL = 15 * 60 * 1000
+import { CACHE_TTL_STOCK } from '../lib/constants.js'
+
+const CACHE_TTL = CACHE_TTL_STOCK
 const cache = new Map()
 
 export default async function handler(req, res) {

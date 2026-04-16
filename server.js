@@ -3,15 +3,17 @@ import express from 'express'
 import cors from 'cors'
 import YahooFinance from 'yahoo-finance2'
 import Anthropic from '@anthropic-ai/sdk'
+import { CACHE_TTL_POLYMARKET, CACHE_TTL_NEWS, CACHE_TTL_FRED, CACHE_TTL_STOCK } from './lib/constants.js'
 
 const app = express()
 const yf = new YahooFinance()
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
 app.use(cors({ origin: /http:\/\/localhost:\d+/ }))
+app.use(express.json())
 
 // ─── Caches ────────────────────────────────────────────────────────────────
-const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
+const CACHE_TTL = CACHE_TTL_POLYMARKET
 
 const polymarketCache = { markets: null, timestamp: 0 }
 const assetMarketCache = new Map()
@@ -195,7 +197,7 @@ app.get('/api/search', async (req, res) => {
 
 // ─── /api/news (TheNewsAPI proxy) ──────────────────────────────────────────
 const newsCache = new Map()
-const NEWS_CACHE_TTL = 15 * 60 * 1000
+const NEWS_CACHE_TTL = CACHE_TTL_NEWS
 
 const NEWS_SEARCH_OVERRIDES = {
   SP500:    '"S&P 500" | "stock market" | "Wall Street"',
@@ -293,7 +295,7 @@ app.get('/api/news', async (req, res) => {
 })
 
 // ─── /api/fred (Federal Reserve Economic Data) ────────────────────────────
-const FRED_CACHE_TTL = 60 * 60 * 1000
+const FRED_CACHE_TTL = CACHE_TTL_FRED
 let fredCache = { data: null, ts: 0 }
 
 const FRED_SERIES = [
@@ -351,7 +353,7 @@ app.get('/api/fred', async (req, res) => {
 
 // ─── /api/stock-summary (Yahoo Finance quoteSummary) ──────────────────────
 const stockCache = new Map()
-const STOCK_CACHE_TTL = 15 * 60 * 1000
+const STOCK_CACHE_TTL = CACHE_TTL_STOCK
 
 app.get('/api/stock-summary', async (req, res) => {
   try {
@@ -411,7 +413,6 @@ app.get('/api/stock-summary', async (req, res) => {
 })
 
 // ─── /api/trade-click (analytics) ──────────────────────────────────────────
-app.use(express.json())
 app.post('/api/trade-click', (req, res) => {
   const { asset, label } = req.body || {}
   const ip = req.headers['x-forwarded-for']?.split(',')[0]?.trim() || req.ip || 'unknown'

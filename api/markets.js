@@ -1,9 +1,10 @@
 import Anthropic from '@anthropic-ai/sdk'
+import { CACHE_TTL_POLYMARKET, CACHE_TTL_NEWS } from '../lib/constants.js'
 
 const anthropic = process.env.ANTHROPIC_API_KEY ? new Anthropic() : null
 
 // ─── Caches (persist across warm serverless invocations) ───────────────────
-const CACHE_TTL = 5 * 60 * 1000
+const CACHE_TTL = CACHE_TTL_POLYMARKET
 const polymarketCache = { markets: null, timestamp: 0 }
 const assetMarketCache = new Map()
 
@@ -131,7 +132,7 @@ Return 20-30 keywords. Be exhaustive with product/brand names. Only return the J
 
 // ─── TheNewsAPI helpers ────────────────────────────────────────────────────
 const newsCache = new Map()
-const NEWS_CACHE_TTL = 15 * 60 * 1000
+const NEWS_CACHE_TTL = CACHE_TTL_NEWS
 
 const NEWS_SEARCH_OVERRIDES = {
   SP500:    '"S&P 500" | "stock market" | "Wall Street"',

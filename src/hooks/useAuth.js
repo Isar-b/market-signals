@@ -35,10 +35,5 @@ export function useAuth() {
       .catch(() => setUser(null))
   }, [])
 
-  // Called after email login/register — re-check session to pick up the new cookie
-  const refreshSession = useCallback(() => {
-    checkSession()
-  }, [checkSession])
-
-  return { user, loading, loginWithGithub, loginWithGoogle, logout, refreshSession }
+  return { user, loading, loginWithGithub, loginWithGoogle, logout }
 }

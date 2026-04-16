@@ -19,5 +19,7 @@ export const HL_TO_MARKET_ID = {
   OIL_HL: 'OIL',
 }
 
-const INDEX_IDS = new Set(['SP500', 'SP500_HL', 'NDX', 'OIL', 'OIL_HL', 'GOLD', 'BTC', 'ETH'])
+const INDEX_IDS = new Set(['SP500', 'SP500_HL', 'NDX', 'OIL', 'OIL_HL', 'GOLD'])
+const CRYPTO_IDS = new Set(['BTC', 'ETH'])
 export const isIndexAsset = (id) => INDEX_IDS.has(id)
+export const isCryptoAsset = (id) => CRYPTO_IDS.has(id)

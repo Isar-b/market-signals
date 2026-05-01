@@ -428,10 +428,17 @@ app.get('/api/markets', async (req, res) => {
       return res.status(400).json({ error: 'asset query param required' })
     }
 
+    const offset = Math.max(0, parseInt(req.query.offset, 10) || 0)
+    const requestedLimit = parseInt(req.query.limit, 10)
+
     // 1. Check per-asset cache (require at least 3 markets to use cache)
     const cached = assetMarketCache.get(asset)
-    if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.markets.length >= 3) {
-      return res.json({ markets: cached.markets, source: 'cache' })
+    if (cached && Date.now() - cached.timestamp < CACHE_TTL && cached.rankedList.length >= 3) {
+      const limit = Number.isFinite(requestedLimit) && requestedLimit > 0
+        ? requestedLimit
+        : cached.defaultDisplayLimit
+      const slice = cached.rankedList.slice(offset, offset + limit)
+      return res.json({ markets: slice, total: cached.rankedList.length, source: 'cache' })
     }
 
     // 2. Fetch or use cached Polymarket data
@@ -457,7 +464,8 @@ app.get('/api/markets', async (req, res) => {
     const assetLabel = label || ASSET_LABELS[asset] || asset
     const INDEX_RE = /\b(s&p|index|composite|dow jones|nasdaq|ftse|russell|nikkei|hang seng|stoxx|dax\b|cac\b|vix|cboe|nyse|kospi|sensex|ibovespa|tsx)\b/i
     const isIndex = ['SP500', 'SP500_HL', 'NDX', 'OIL', 'OIL_HL', 'GOLD', 'BTC', 'ETH'].includes(asset) || INDEX_RE.test(assetLabel)
-    const marketLimit = isIndex ? 10 : 5
+    const displayLimit = isIndex ? 10 : 5
+    const rankLimit = isIndex ? 20 : 15
     let assetProfile = null
     let profileKeywords = []
     if (anthropic) {
@@ -557,14 +565,14 @@ app.get('/api/markets', async (req, res) => {
 
     // 5. LLM selection (with fallback to top-by-volume)
     let selected
-    if (candidates.length <= marketLimit) {
+    if (candidates.length <= rankLimit) {
       selected = candidates
     } else {
       try {
-        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile, marketLimit, newsContext)
+        selected = await selectWithLLM(candidates, asset, assetLabel, assetProfile, rankLimit, newsContext)
       } catch (err) {
         console.error('LLM selection failed, using volume fallback:', err.message)
-        selected = candidates.slice(0, marketLimit)
+        selected = candidates.slice(0, rankLimit)
       }
     }
 
@@ -584,10 +592,10 @@ app.get('/api/markets', async (req, res) => {
       if (PRICE_CAP_RE.test(m.question)) priceMarkets.push(m)
       else otherMarkets.push(m)
     }
-    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, marketLimit)
+    selected = [...otherMarkets, ...priceMarkets.slice(0, 2)].slice(0, rankLimit)
 
     // 5. Format response — extract tokenId from clobTokenIds
-    const markets = selected.map(m => {
+    const rankedList = selected.map(m => {
       let tokenIds = m.clobTokenIds
       if (typeof tokenIds === 'string') {
         try { tokenIds = JSON.parse(tokenIds) } catch { /* ignore */ }
@@ -600,9 +608,16 @@ app.get('/api/markets', async (req, res) => {
       }
     }).filter(m => m.tokenId) // only include markets with valid tokenIds
 
-    // 6. Cache and return
-    assetMarketCache.set(asset, { markets, timestamp: Date.now() })
-    res.json({ markets })
+    // 6. Cache and return paginated slice
+    assetMarketCache.set(asset, {
+      rankedList,
+      defaultDisplayLimit: displayLimit,
+      timestamp: Date.now(),
+    })
+
+    const limit = Number.isFinite(requestedLimit) && requestedLimit > 0 ? requestedLimit : displayLimit
+    const slice = rankedList.slice(offset, offset + limit)
+    res.json({ markets: slice, total: rankedList.length })
   } catch (err) {
     console.error('Markets error:', err.message)
     res.status(500).json({ error: err.message })
@@ -700,7 +715,7 @@ Return 20-30 keywords. Be exhaustive with product/brand names. Only return the J
 }
 
 
-async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, marketLimit = 5, newsContext = '') {
+async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, rankLimit = 5, newsContext = '') {
   if (!anthropic) {
     throw new Error('ANTHROPIC_API_KEY not configured')
   }
@@ -712,7 +727,7 @@ async function selectWithLLM(candidates, assetId, assetLabel, assetProfile, mark
 
   const prompt = `You are a strict editor selecting prediction markets for a financial dashboard tracking: ${assetLabel}.
 ${assetProfile ? `\nABOUT THIS ASSET: ${assetProfile}\n` : ''}${newsContext ? `\nCURRENT NEWS (prioritise markets related to these themes):\n${newsContext}\n` : ''}
-YOUR TASK: From the candidate markets below, select up to ${marketLimit} that are DIVERSE, RELEVANT, and NON-DUPLICATIVE.
+YOUR TASK: From the candidate markets below, select up to ${rankLimit} that are DIVERSE, RELEVANT, and NON-DUPLICATIVE.
 
 ━━━ STEP 1: NARRATIVE GROUPING (this is the most important step) ━━━
 
@@ -743,7 +758,7 @@ REJECT if:
 
 ━━━ STEP 3: SELECTION ━━━
 
-From the surviving narrative groups, pick the SINGLE best market from each group (highest 24h volume = most liquid/interesting). Return up to ${marketLimit} total, prioritising:
+From the surviving narrative groups, pick the SINGLE best market from each group (highest 24h volume = most liquid/interesting). Return up to ${rankLimit} total, prioritising:
 1. Markets that literally name ${assetLabel} (earnings, products, lawsuits, leadership)
 2. Markets about ${assetLabel}'s specific sector
 3. Markets about ${assetLabel}'s geographic exposure
@@ -752,7 +767,7 @@ From the surviving narrative groups, pick the SINGLE best market from each group
 
 FINAL CHECKS before returning:
 - Count how many narratives you selected. If two selections are really the same story told differently, DROP one.
-- If you have fewer than ${marketLimit} good matches, that's fine. Return fewer. An empty array [] is better than irrelevant padding.
+- If you have fewer than ${rankLimit} good matches, that's fine. Return fewer. An empty array [] is better than irrelevant padding.
 
 Markets:
 ${candidateList}
@@ -790,7 +805,7 @@ Return ONLY a JSON array of the index numbers you selected, e.g. [0, 3, 7]. No e
 
   return indices
     .filter(i => typeof i === 'number' && i >= 0 && i < candidates.length)
-    .slice(0, marketLimit)
+    .slice(0, rankLimit)
     .map(i => candidates[i])
 }
 

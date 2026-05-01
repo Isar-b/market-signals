@@ -1,12 +1,16 @@
 import { useSharedPrice } from '../hooks/useSharedPriceCache'
-import { useMarketHistory } from '../hooks/useMarketHistory'
 import ProbabilityChart from './ProbabilityChart'
 
-export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
-  const { price, loading: priceLoading, error: priceError } = useSharedPrice(market.tokenId)
-  const { history, loading: histLoading } = useMarketHistory(market.tokenId, horizon, isExpanded)
+function formatCompactUSD(n) {
+  if (!Number.isFinite(n) || n <= 0) return null
+  if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(n >= 10_000_000 ? 0 : 1)}M`
+  if (n >= 1_000) return `$${(n / 1_000).toFixed(n >= 10_000 ? 0 : 1)}K`
+  return `$${Math.round(n)}`
+}
 
-  // If tokenId was never resolved, show unavailable state
+export default function MarketCard({ market, isExpanded, onToggle, horizon, history = [], historyLoading = false }) {
+  const { price, loading: priceLoading, error: priceError } = useSharedPrice(market.tokenId)
+
   if (!market.tokenId) {
     return (
       <div className="bg-bg-card rounded-lg border border-border px-4 py-3 opacity-50">
@@ -16,7 +20,6 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
     )
   }
 
-  // If market is resolved (expired)
   if (market.resolved) {
     return (
       <div className="bg-bg-card rounded-lg border border-border px-4 py-3 opacity-60">
@@ -34,14 +37,13 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
   const priceColor = price == null ? 'text-text-secondary'
     : price >= 0.5 ? 'text-green' : 'text-red'
 
-  // Compute 24h change from history (if available)
   let changeIndicator = null
   if (history.length >= 2) {
     const oldest = history[0].probability
     const newest = history[history.length - 1].probability
     const changePp = Math.round((newest - oldest) * 100)
     if (changePp !== 0) {
-      const arrow = changePp > 0 ? '\u25B2' : '\u25BC'
+      const arrow = changePp > 0 ? '▲' : '▼'
       const changeColor = changePp > 0 ? 'text-green' : 'text-red'
       changeIndicator = (
         <span className={`text-xs ${changeColor} ml-2`}>
@@ -51,14 +53,22 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
     }
   }
 
+  const volumeBadge = formatCompactUSD(Number(market.volume24hr))
+
   return (
     <div className="bg-bg-card rounded-lg border border-border overflow-hidden">
-      {/* Collapsed header - always visible */}
       <button
         onClick={onToggle}
         className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-primary/30 transition-colors text-left"
       >
-        <span className="text-sm text-text-primary flex-1 pr-2">{market.label}</span>
+        <div className="flex-1 pr-2 flex items-baseline gap-2 min-w-0">
+          <span className="text-sm text-text-primary truncate">{market.label}</span>
+          {volumeBadge && (
+            <span className="text-xs text-text-secondary whitespace-nowrap" title="24h volume">
+              {volumeBadge}
+            </span>
+          )}
+        </div>
         <div className="flex items-center">
           {priceLoading ? (
             <span className="inline-block w-12 h-6 bg-bg-primary rounded animate-pulse" />
@@ -82,10 +92,9 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon }) {
         </div>
       </button>
 
-      {/* Expanded content - probability chart */}
       {isExpanded && (
         <div className="px-4 pb-3 border-t border-border pt-2">
-          {histLoading ? (
+          {historyLoading && history.length === 0 ? (
             <div className="text-text-secondary text-xs py-4 animate-pulse">Loading chart...</div>
           ) : (
             <ProbabilityChart data={history} horizon={horizon} />

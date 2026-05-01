@@ -46,7 +46,7 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon, hist
       const arrow = changePp > 0 ? '▲' : '▼'
       const changeColor = changePp > 0 ? 'text-green' : 'text-red'
       changeIndicator = (
-        <span className={`text-xs ${changeColor} ml-2`}>
+        <span className={`text-xs ${changeColor}`}>
           {arrow} {Math.abs(changePp)}pp
         </span>
       )
@@ -61,37 +61,37 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon, hist
       <div className="flex items-stretch">
         <button
           onClick={onToggle}
-          className="flex-1 min-w-0 flex items-center justify-between px-4 py-3 hover:bg-bg-primary/30 transition-colors text-left"
+          className="flex-1 min-w-0 flex items-center gap-3 px-4 py-3 hover:bg-bg-primary/30 transition-colors text-left"
         >
-          <div className="flex-1 pr-2 flex items-baseline gap-2 min-w-0">
-            <span className="text-sm text-text-primary truncate">{market.label}</span>
-            {volumeBadge && (
-              <span className="text-xs text-text-secondary whitespace-nowrap" title="24h volume">
-                {volumeBadge}
-              </span>
-            )}
+          <div className="flex-1 min-w-0 flex flex-col gap-1.5">
+            <span className="text-sm text-text-primary leading-snug">{market.label}</span>
+            <div className="flex items-center gap-2 flex-wrap">
+              {volumeBadge && (
+                <span className="text-xs text-text-secondary whitespace-nowrap" title="24h volume">
+                  {volumeBadge}
+                </span>
+              )}
+              {priceLoading ? (
+                <span className="inline-block w-12 h-5 bg-bg-primary rounded animate-pulse" />
+              ) : priceError ? (
+                <span className="text-xs text-red">ERR</span>
+              ) : (
+                <>
+                  <span className={`text-base font-bold ${priceColor}`}>{displayPrice}</span>
+                  {changeIndicator}
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex items-center">
-            {priceLoading ? (
-              <span className="inline-block w-12 h-6 bg-bg-primary rounded animate-pulse" />
-            ) : priceError ? (
-              <span className="text-xs text-red">ERR</span>
-            ) : (
-              <>
-                <span className={`text-lg font-bold ${priceColor}`}>{displayPrice}</span>
-                {changeIndicator}
-              </>
-            )}
-            <svg
-              className={`w-4 h-4 ml-3 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-              strokeWidth={2}
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-            </svg>
-          </div>
+          <svg
+            className={`shrink-0 w-4 h-4 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            strokeWidth={2}
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+          </svg>
         </button>
         {polymarketUrl && (
           <a

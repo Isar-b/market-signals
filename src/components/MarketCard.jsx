@@ -54,43 +54,67 @@ export default function MarketCard({ market, isExpanded, onToggle, horizon, hist
   }
 
   const volumeBadge = formatCompactUSD(Number(market.volume24hr))
+  const polymarketUrl = market.slug ? `https://polymarket.com/event/${market.slug}` : null
 
   return (
     <div className="bg-bg-card rounded-lg border border-border overflow-hidden">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-4 py-3 hover:bg-bg-primary/30 transition-colors text-left"
-      >
-        <div className="flex-1 pr-2 flex items-baseline gap-2 min-w-0">
-          <span className="text-sm text-text-primary truncate">{market.label}</span>
-          {volumeBadge && (
-            <span className="text-xs text-text-secondary whitespace-nowrap" title="24h volume">
-              {volumeBadge}
-            </span>
-          )}
-        </div>
-        <div className="flex items-center">
-          {priceLoading ? (
-            <span className="inline-block w-12 h-6 bg-bg-primary rounded animate-pulse" />
-          ) : priceError ? (
-            <span className="text-xs text-red">ERR</span>
-          ) : (
-            <>
-              <span className={`text-lg font-bold ${priceColor}`}>{displayPrice}</span>
-              {changeIndicator}
-            </>
-          )}
-          <svg
-            className={`w-4 h-4 ml-3 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-            strokeWidth={2}
+      <div className="flex items-stretch">
+        <button
+          onClick={onToggle}
+          className="flex-1 min-w-0 flex items-center justify-between px-4 py-3 hover:bg-bg-primary/30 transition-colors text-left"
+        >
+          <div className="flex-1 pr-2 flex items-baseline gap-2 min-w-0">
+            <span className="text-sm text-text-primary truncate">{market.label}</span>
+            {volumeBadge && (
+              <span className="text-xs text-text-secondary whitespace-nowrap" title="24h volume">
+                {volumeBadge}
+              </span>
+            )}
+          </div>
+          <div className="flex items-center">
+            {priceLoading ? (
+              <span className="inline-block w-12 h-6 bg-bg-primary rounded animate-pulse" />
+            ) : priceError ? (
+              <span className="text-xs text-red">ERR</span>
+            ) : (
+              <>
+                <span className={`text-lg font-bold ${priceColor}`}>{displayPrice}</span>
+                {changeIndicator}
+              </>
+            )}
+            <svg
+              className={`w-4 h-4 ml-3 text-text-secondary transition-transform ${isExpanded ? 'rotate-180' : ''}`}
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
+            </svg>
+          </div>
+        </button>
+        {polymarketUrl && (
+          <a
+            href={polymarketUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => e.stopPropagation()}
+            title="View on Polymarket"
+            aria-label="View on Polymarket"
+            className="flex items-center px-3 text-text-secondary hover:text-text-primary hover:bg-bg-primary/30 border-l border-border transition-colors"
           >
-            <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
-          </svg>
-        </div>
-      </button>
+            <svg
+              className="w-3.5 h-3.5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+            >
+              <path strokeLinecap="round" strokeLinejoin="round" d="M14 5h5m0 0v5m0-5L10 14m-5-9h4M5 5v14h14v-4" />
+            </svg>
+          </a>
+        )}
+      </div>
 
       {isExpanded && (
         <div className="px-4 pb-3 border-t border-border pt-2">

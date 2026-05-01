@@ -450,6 +450,7 @@ export default async function handler(req, res) {
         label: m.question,
         tokenId: Array.isArray(tokenIds) && tokenIds.length > 0 ? tokenIds[0] : null,
         volume24hr: m.volume24hr,
+        slug: m.slug || null,
       }
     }).filter(m => m.tokenId)
 
